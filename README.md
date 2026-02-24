@@ -127,6 +127,9 @@ agentauth verify <token> --secret your-secret
 
 # Benchmark challenge generation
 agentauth benchmark --rounds 10 --difficulty hard
+
+# Manage challenge packages
+agentauth add ./my-challenge && agentauth list
 ```
 
 ---
@@ -245,14 +248,82 @@ For multi-step challenges, timing **patterns** across steps are also analyzed:
 
 ## HTTP Headers
 
-AgentAuth defines standard headers for agent-to-API communication:
+AgentAuth injects standard response headers on verified requests, making agent status visible to downstream middleware and proxies:
 
 ```http
 AgentAuth-Status: verified
-AgentAuth-Score: 0.94
+AgentAuth-Score: 0.93
 AgentAuth-Model-Family: gpt-4-class
 AgentAuth-PoMI-Confidence: 0.87
-AgentAuth-Capabilities: reasoning=0.94,execution=0.98,autonomy=0.91
+AgentAuth-Capabilities: reasoning=0.94,execution=0.98,autonomy=0.91,speed=0.87,consistency=0.95
+AgentAuth-Version: 1
+AgentAuth-Challenge-Id: ch_a1b2c3
+AgentAuth-Token-Expires: 1708784400
+```
+
+Headers are automatically set by the `guard()` and `verify()` middleware. The client SDK parses them from responses via `result.headers`.
+
+---
+
+## Self-Hosting
+
+Run AgentAuth with Docker in one command:
+
+```bash
+docker compose up -d
+```
+
+Or build and run directly:
+
+```bash
+docker build -t agentauth .
+docker run -e AGENTAUTH_SECRET=your-secret-at-least-32-chars-long -p 3000:3000 agentauth
+```
+
+The server exposes all challenge endpoints on port 3000 with PoMI and timing analysis enabled by default. Configure via environment variables: `AGENTAUTH_SECRET`, `POMI_ENABLED`, `TIMING_ENABLED`.
+
+---
+
+## Challenge Registry
+
+AgentAuth supports community-built challenge drivers via a local package registry.
+
+### Package Format
+
+```
+my-challenge/
+├── agentauth.json    # manifest
+└── src/
+    └── index.ts      # implements ChallengeDriver
+```
+
+```json
+{
+  "name": "@community/chess-puzzle",
+  "version": "1.0.0",
+  "description": "Chess puzzle challenge driver",
+  "author": "chess-enthusiast",
+  "dimensions": ["reasoning", "execution"],
+  "difficulties": ["easy", "medium", "hard"],
+  "entry": "src/index.ts",
+  "agentauth_version": ">=1.0.0"
+}
+```
+
+### CLI Commands
+
+```bash
+# Install a local challenge package
+agentauth add ./my-chess-puzzle
+
+# List installed packages
+agentauth list
+
+# Search packages
+agentauth search "chess"
+
+# Validate a package before publishing
+agentauth publish --dry-run
 ```
 
 ## Architecture
@@ -279,7 +350,7 @@ graph TB
 | [`@xagentauth/core`](packages/core) | Challenge engine, types, scoring, PoMI, timing | Available |
 | [`@xagentauth/server`](packages/server) | Express middleware (challenge, verify, guard) | Available |
 | [`@xagentauth/client`](packages/client) | Client SDK — authenticate agents against any AgentAuth server | Available |
-| [`@xagentauth/cli`](packages/cli) | CLI — generate, verify, benchmark | Available |
+| [`@xagentauth/cli`](packages/cli) | CLI — generate, verify, benchmark, registry management | Available |
 
 ## Roadmap
 
@@ -293,8 +364,10 @@ graph TB
 - [ ] Python SDK — server + client
 - [ ] Go SDK — server + client
 - [ ] Edge runtime support — Cloudflare Workers, Deno Deploy
-- [ ] Docker self-host image
-- [ ] Challenge registry and public leaderboard
+- [x] Docker self-host image
+- [x] Challenge registry (local) and CLI commands
+- [x] Standard HTTP headers (AgentAuth-*)
+- [ ] Public model leaderboard
 
 ## Contributing
 

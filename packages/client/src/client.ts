@@ -39,12 +39,13 @@ export class AgentAuthClient {
     metadata?: { model?: string; framework?: string },
   ): Promise<SolveResponse> {
     const hmac = await hmacSha256Hex(answer, sessionToken)
-    return this.http.post<SolveResponse>(`/v1/challenge/${id}/solve`, {
+    const { data, agentAuthHeaders } = await this.http.postWithHeaders<SolveResponse>(`/v1/challenge/${id}/solve`, {
       answer,
       hmac,
       canary_responses: canaryResponses,
       metadata,
     })
+    return { ...data, headers: agentAuthHeaders }
   }
 
   async verifyToken(token: string): Promise<VerifyTokenResponse> {
@@ -81,6 +82,7 @@ export class AgentAuthClient {
       model_identity: result.model_identity,
       timing_analysis: result.timing_analysis,
       reason: result.reason,
+      headers: result.headers,
     }
   }
 }

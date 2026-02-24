@@ -321,4 +321,114 @@ describe('Express middleware', () => {
       expect(res.body.valid).toBe(false)
     })
   })
+
+  describe('AgentAuth HTTP response headers', () => {
+    async function solveCorrectly(testApp: express.Express) {
+      const init = await request(testApp)
+        .post('/v1/challenge/init')
+        .send({ difficulty: 'easy' })
+        .expect(201)
+
+      const { id, session_token } = init.body
+
+      const challengeRes = await request(testApp)
+        .get(`/v1/challenge/${id}`)
+        .set('Authorization', `Bearer ${session_token}`)
+        .expect(200)
+
+      const answer = await agentSolve(challengeRes.body.payload)
+      const hmac = await hmacSha256Hex(answer, session_token)
+
+      const solveRes = await request(testApp)
+        .post(`/v1/challenge/${id}/solve`)
+        .send({ answer, hmac })
+        .expect(200)
+
+      return { solveRes, token: solveRes.body.token, id, session_token }
+    }
+
+    it('includes AgentAuth-Status: verified header on successful solve', async () => {
+      const { solveRes } = await solveCorrectly(app)
+
+      expect(solveRes.body.success).toBe(true)
+      expect(solveRes.headers['agentauth-status']).toBe('verified')
+    })
+
+    it('includes AgentAuth-Capabilities header on successful solve', async () => {
+      const { solveRes } = await solveCorrectly(app)
+
+      expect(solveRes.body.success).toBe(true)
+      expect(solveRes.headers['agentauth-capabilities']).toBeTruthy()
+      expect(solveRes.headers['agentauth-capabilities']).toContain('reasoning=')
+      expect(solveRes.headers['agentauth-capabilities']).toContain('execution=')
+    })
+
+    it('includes AgentAuth-Challenge-Id header on successful solve', async () => {
+      const { solveRes, id } = await solveCorrectly(app)
+
+      expect(solveRes.body.success).toBe(true)
+      expect(solveRes.headers['agentauth-challenge-id']).toBe(id)
+    })
+
+    it('includes AgentAuth-Version header on successful solve', async () => {
+      const { solveRes } = await solveCorrectly(app)
+
+      expect(solveRes.body.success).toBe(true)
+      expect(solveRes.headers['agentauth-version']).toBe('1')
+    })
+
+    it('does NOT set AgentAuth headers on failed solve', async () => {
+      const init = await request(app)
+        .post('/v1/challenge/init')
+        .send({ difficulty: 'easy' })
+        .expect(201)
+
+      const { id, session_token } = init.body
+      const fakeAnswer = 'a'.repeat(64)
+      const hmac = await hmacSha256Hex(fakeAnswer, session_token)
+
+      const res = await request(app)
+        .post(`/v1/challenge/${id}/solve`)
+        .send({ answer: fakeAnswer, hmac })
+        .expect(200)
+
+      expect(res.body.success).toBe(false)
+      expect(res.headers['agentauth-status']).toBeUndefined()
+      expect(res.headers['agentauth-capabilities']).toBeUndefined()
+    })
+
+    it('includes AgentAuth-Status: verified header on guarded route', async () => {
+      const { token } = await solveCorrectly(app)
+
+      const protectedRes = await request(app)
+        .get('/protected')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200)
+
+      expect(protectedRes.headers['agentauth-status']).toBe('verified')
+    })
+
+    it('includes AgentAuth-Capabilities header on guarded route', async () => {
+      const { token } = await solveCorrectly(app)
+
+      const protectedRes = await request(app)
+        .get('/protected')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200)
+
+      expect(protectedRes.headers['agentauth-capabilities']).toBeTruthy()
+      expect(protectedRes.headers['agentauth-capabilities']).toContain('reasoning=')
+    })
+
+    it('includes AgentAuth-Token-Expires header on guarded route', async () => {
+      const { token } = await solveCorrectly(app)
+
+      const protectedRes = await request(app)
+        .get('/protected')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200)
+
+      expect(protectedRes.headers['agentauth-token-expires']).toBeTruthy()
+    })
+  })
 })

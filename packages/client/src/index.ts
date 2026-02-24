@@ -10,4 +10,5 @@ export type {
   SolverResult,
   AuthenticateOptions,
   AuthenticateResult,
+  AgentAuthResponseHeaders,
 } from './types.js'
