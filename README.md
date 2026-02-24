@@ -67,6 +67,7 @@ const auth = new AgentAuth({
   secret: process.env.AGENTAUTH_SECRET,
   store: new MemoryStore(),
   pomi: { enabled: true },
+  timing: { enabled: true },
 })
 
 // Challenge endpoint — agents call this first
@@ -224,14 +225,55 @@ The verify response includes model identification:
 
 ### Timing Analysis
 
-AgentAuth measures response time to classify the solver:
+AgentAuth measures response time to classify the solver and detect humans-in-the-loop or naive scripts:
 
+```mermaid
+graph LR
+    subgraph Timing Zones
+        TF["< 50ms<br/>TOO FAST<br/>🚫 Reject"]
+        AI["50ms - 2s<br/>AI ZONE<br/>✅ Accept"]
+        SU["2s - 10s<br/>SUSPICIOUS<br/>⚠️ Penalize"]
+        HU["10s - 30s<br/>HUMAN<br/>⚠️ Penalize"]
+        TO["> 30s<br/>TIMEOUT<br/>🚫 Reject"]
+    end
+    TF --> AI --> SU --> HU --> TO
 ```
-< 50ms        Too fast — pre-computed / hardcoded script → rejected
-50ms – 2s     AI zone — autonomous agent → accepted
-2s – 10s      Suspicious — human assisted by LLM → penalized
-> 10s         Too slow — human alone → rejected
+
+Timing analysis is applied to the `speed` and `autonomy` capability scores:
+
+| Zone | Penalty | Speed Score | Autonomy Score |
+|------|---------|-------------|----------------|
+| `too_fast` | 1.0 | Rejected | Rejected |
+| `ai_zone` | 0.0 | Full (0.95) | Full (0.90) |
+| `suspicious` | 0.3-0.7 | Reduced | Reduced |
+| `human` | 0.9 | Near-zero | Near-zero |
+| `timeout` | 1.0 | Rejected | Rejected |
+
+The verify response includes timing analysis details:
+
+```json
+{
+  "timing_analysis": {
+    "elapsed_ms": 340,
+    "zone": "ai_zone",
+    "confidence": 0.92,
+    "z_score": 0.33,
+    "penalty": 0.0,
+    "details": "Response time 340ms is within expected AI range"
+  }
+}
 ```
+
+#### Multi-Step Pattern Analysis
+
+For multi-step challenges, AgentAuth also analyzes the timing **pattern** across steps:
+
+| Signal | Indicates | Detection |
+|--------|----------|-----------|
+| Constant timing (low variance) | Scripted with fixed delays | Variance coefficient < 0.05 |
+| Round-number timings (500ms, 1s) | Artificial delays | Modulo analysis |
+| Increasing trend | Human fatigue | Linear regression slope |
+| Natural variance | Genuine AI agent | Variance coefficient > 0.1 |
 
 ## Framework Integrations
 

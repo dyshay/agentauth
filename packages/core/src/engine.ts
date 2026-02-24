@@ -11,6 +11,8 @@ import type {
   PomiConfig,
   Canary,
   ModelIdentification,
+  TimingConfig,
+  TimingAnalysis,
 } from './types.js'
 import { generateId, generateSessionToken, hmacSha256Hex, timingSafeEqual } from './crypto.js'
 import { TokenManager, type AgentAuthJWTPayload } from './token.js'
@@ -18,6 +20,7 @@ import { ChallengeRegistry } from './challenges/registry.js'
 import { CanaryCatalog } from './pomi/catalog.js'
 import { CanaryInjector } from './pomi/injector.js'
 import { ModelClassifier } from './pomi/classifier.js'
+import { TimingAnalyzer } from './timing/analyzer.js'
 
 export interface InitChallengeOptions {
   difficulty?: Difficulty
@@ -56,6 +59,7 @@ export class AgentAuthEngine {
   private pomiConfig?: PomiConfig
   private canaryInjector?: CanaryInjector
   private modelClassifier?: ModelClassifier
+  private timingAnalyzer?: TimingAnalyzer
 
   constructor(config: AgentAuthConfig) {
     this.store = config.store
@@ -68,6 +72,11 @@ export class AgentAuthEngine {
     // Register all drivers from config (backward compatible)
     for (const driver of config.drivers ?? []) {
       this.registry.register(driver)
+    }
+
+    // Initialize timing analyzer if enabled
+    if (config.timing?.enabled) {
+      this.timingAnalyzer = new TimingAnalyzer(config.timing)
     }
 
     // Initialize PoMI if enabled
@@ -183,8 +192,26 @@ export class AgentAuthEngine {
       return { success: false, score: zeroScore, reason: 'wrong_answer' }
     }
 
+    // Compute timing analysis
+    let timingAnalysis: TimingAnalysis | undefined
+
+    if (this.timingAnalyzer) {
+      const now = Date.now()
+      const elapsed_ms = now - data.challenge.created_at * 1000
+      timingAnalysis = this.timingAnalyzer.analyze({
+        elapsed_ms,
+        challenge_type: data.challenge.payload.type,
+        difficulty: data.challenge.difficulty,
+      })
+
+      // Reject too_fast and timeout
+      if (timingAnalysis.zone === 'too_fast') {
+        return { success: false, score: zeroScore, reason: 'too_fast', timing_analysis: timingAnalysis }
+      }
+    }
+
     // Compute capability score
-    const score = this.computeScore(data)
+    const score = this.computeScore(data, timingAnalysis)
 
     // Classify model identity if PoMI is enabled
     let modelIdentity: ModelIdentification | undefined
@@ -212,7 +239,7 @@ export class AgentAuthEngine {
       { ttlSeconds: this.tokenTtlSeconds },
     )
 
-    return { success: true, score, token, model_identity: modelIdentity }
+    return { success: true, score, token, model_identity: modelIdentity, timing_analysis: timingAnalysis }
   }
 
   async verifyToken(token: string): Promise<VerifyTokenResult> {
@@ -230,13 +257,18 @@ export class AgentAuthEngine {
     }
   }
 
-  private computeScore(data: ChallengeData): AgentCapabilityScore {
+  private computeScore(data: ChallengeData, timingAnalysis?: TimingAnalysis): AgentCapabilityScore {
     const dims = data.challenge.dimensions
+    const penalty = timingAnalysis?.penalty ?? 0
+    const zone = timingAnalysis?.zone
+
     return {
       reasoning: dims.includes('reasoning') ? 0.9 : 0.5,
       execution: dims.includes('execution') ? 0.95 : 0.5,
-      autonomy: 0.9,  // placeholder until Phase 4 timing
-      speed: 0.85,    // placeholder until Phase 4 timing
+      speed: Math.round((1 - penalty) * 0.95 * 1000) / 1000,
+      autonomy: (zone === 'human' || zone === 'suspicious')
+        ? Math.round((1 - penalty) * 0.9 * 1000) / 1000
+        : 0.9,
       consistency: dims.includes('memory') ? 0.92 : 0.9,
     }
   }

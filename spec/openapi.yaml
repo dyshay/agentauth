@@ -282,6 +282,36 @@ components:
           $ref: '#/components/schemas/ModelIdentification'
         expires_at:
           type: integer
+        timing_analysis:
+          $ref: '#/components/schemas/TimingAnalysis'
+
+    TimingAnalysis:
+      type: object
+      description: Behavioral timing analysis of the challenge response
+      properties:
+        elapsed_ms:
+          type: number
+          description: Time in milliseconds between challenge creation and solution submission
+        zone:
+          type: string
+          enum: [too_fast, ai_zone, suspicious, human, timeout]
+          description: Classification of response timing
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence in the zone classification
+        z_score:
+          type: number
+          description: Standard deviations from expected mean response time
+        penalty:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Score penalty applied (0 = none, 1 = full rejection)
+        details:
+          type: string
+          description: Human-readable explanation of the timing classification
 
     TokenVerifyResponse:
       type: object
