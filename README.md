@@ -45,7 +45,7 @@ An agent that passes an AgentAuth challenge receives a signed JWT containing:
 
 ```bash
 # Node.js
-npm install @agentauth/server
+npm install @xagentauth/server
 
 # Python
 pip install agentauth
@@ -60,7 +60,7 @@ go get github.com/agentauth/agentauth-go
 
 ```typescript
 import express from 'express'
-import { AgentAuth, MemoryStore } from '@agentauth/server'
+import { AgentAuth, MemoryStore } from '@xagentauth/server'
 
 const app = express()
 const auth = new AgentAuth({
@@ -85,7 +85,7 @@ app.listen(3000)
 ### Solve a Challenge (Agent Client)
 
 ```typescript
-import { AgentAuthClient } from '@agentauth/client'
+import { AgentAuthClient } from '@xagentauth/client'
 
 const client = new AgentAuthClient({
   baseUrl: 'https://api.example.com',
@@ -263,11 +263,11 @@ services:
 
 | Package | Description |
 |---------|-------------|
-| `@agentauth/core` | Challenge logic, types, scoring — framework-agnostic |
-| `@agentauth/server` | Express, Hono, Fastify middleware |
-| `@agentauth/client` | Client SDK for agents to solve challenges |
-| `@agentauth/react` | React component + hooks |
-| `@agentauth/cli` | CLI for testing, benchmarking, publishing |
+| `@xagentauth/core` | Challenge logic, types, scoring — framework-agnostic |
+| `@xagentauth/server` | Express, Hono, Fastify middleware |
+| `@xagentauth/client` | Client SDK for agents to solve challenges |
+| `@xagentauth/react` | React component + hooks |
+| `@xagentauth/cli` | CLI for testing, benchmarking, publishing |
 | `agentauth` (PyPI) | Python server + client SDK |
 | `agentauth-go` | Go server + client SDK |
 

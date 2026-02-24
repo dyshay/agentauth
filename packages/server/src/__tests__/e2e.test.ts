@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import express from 'express'
 import request from 'supertest'
 import { AgentAuth } from '../middleware.js'
-import { MemoryStore, CryptoNLDriver, hmacSha256Hex, sha256Hex } from '@agentauth/core'
+import { MemoryStore, CryptoNLDriver, hmacSha256Hex, sha256Hex } from '@xagentauth/core'
 
 /**
  * Simulates what an AI agent would do: parse NL instructions and execute byte operations.

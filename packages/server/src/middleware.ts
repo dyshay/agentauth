@@ -4,7 +4,7 @@ import {
   type AgentAuthConfig,
   type InitChallengeOptions,
   type SolveInput,
-} from '@agentauth/core'
+} from '@xagentauth/core'
 
 export interface GuardOptions {
   minScore?: number

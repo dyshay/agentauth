@@ -1,5 +1,5 @@
 {
-  "name": "@agentauth/server",
+  "name": "@xagentauth/server",
   "version": "0.0.1",
   "type": "module",
   "exports": {
@@ -11,6 +11,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -18,7 +21,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@agentauth/core": "workspace:*",
+    "@xagentauth/core": "workspace:*",
     "express": "^5"
   },
   "devDependencies": {

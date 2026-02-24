@@ -36,7 +36,7 @@ importers:
 
   packages/server:
     dependencies:
-      '@agentauth/core':
+      '@xagentauth/core':
         specifier: workspace:*
         version: link:../core
       express:

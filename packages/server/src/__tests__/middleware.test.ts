@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import express from 'express'
 import request from 'supertest'
 import { AgentAuth } from '../middleware.js'
-import { MemoryStore, CryptoNLDriver, hmacSha256Hex } from '@agentauth/core'
+import { MemoryStore, CryptoNLDriver, hmacSha256Hex } from '@xagentauth/core'
 
 function createApp() {
   const app = express()
