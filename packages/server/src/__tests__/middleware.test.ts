@@ -2,7 +2,49 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import express from 'express'
 import request from 'supertest'
 import { AgentAuth } from '../middleware.js'
-import { MemoryStore, CryptoNLDriver, hmacSha256Hex } from '@xagentauth/core'
+import { MemoryStore, CryptoNLDriver, hmacSha256Hex, sha256Hex, type TimingConfig } from '@xagentauth/core'
+
+/**
+ * Minimal agent solver: parses CryptoNLDriver instructions and executes byte operations.
+ * Mirrors the solver in e2e.test.ts.
+ */
+async function agentSolve(payload: { instructions: string; data: string }): Promise<string> {
+  let bytes = new Uint8Array(Buffer.from(payload.data, 'base64'))
+  const lines = payload.instructions.split('\n').filter((l) => l.startsWith('Step'))
+
+  for (const line of lines) {
+    const instruction = line.replace(/^Step \d+:\s*/, '')
+
+    if (/xor/i.test(instruction) || /exclusive.or/i.test(instruction) || /flip bits/i.test(instruction)) {
+      const hexMatch = instruction.match(/0x([0-9A-Fa-f]+)/)
+      const keyMatch = instruction.match(/(?:value|key)\s+(\d+)/)
+      const key = hexMatch ? parseInt(hexMatch[1], 16) : keyMatch ? parseInt(keyMatch[1]) : 0
+      if (key > 0) bytes = bytes.map((b) => b ^ key)
+    } else if (/reverse|flip.*end.to.end|mirror|invert.*ordering/i.test(instruction)) {
+      bytes = bytes.reverse()
+    } else if (/sort|ascending|smallest.*largest|lowest first/i.test(instruction)) {
+      bytes = new Uint8Array([...bytes].sort((a, b) => a - b))
+    } else if (/offset.*to\s+\d+|slice\s*\[|positions?\s+\d+\s+through/i.test(instruction)) {
+      const throughMatch = instruction.match(/positions?\s+(\d+)\s+through\s+(\d+)/)
+      if (throughMatch) {
+        bytes = bytes.slice(parseInt(throughMatch[1]), parseInt(throughMatch[2]) + 1)
+      } else {
+        const nums = instruction.match(/(\d+)/g)?.map(Number) ?? []
+        if (nums.length >= 2) bytes = bytes.slice(nums[0], nums[1])
+      }
+    } else if (/rotate|shift|circular/i.test(instruction)) {
+      const posMatch = instruction.match(/(\d+)\s*position/i) || instruction.match(/by\s+(\d+)/i)
+      if (posMatch) {
+        const pos = parseInt(posMatch[1]) % bytes.length
+        const rotated = new Uint8Array(bytes.length)
+        for (let i = 0; i < bytes.length; i++) rotated[i] = bytes[(i + pos) % bytes.length]
+        bytes = rotated
+      }
+    }
+  }
+
+  return sha256Hex(bytes)
+}
 
 function createApp() {
   const app = express()
@@ -169,6 +211,90 @@ describe('Express middleware', () => {
       // Answer is wrong but that's fine — we're testing the middleware accepts the field
       expect(res.body.success).toBe(false)
       expect(res.body.reason).toBe('wrong_answer')
+    })
+  })
+
+  describe('timing_analysis in solve response', () => {
+    it('omits timing_analysis when timing is not configured', async () => {
+      const init = await request(app)
+        .post('/v1/challenge/init')
+        .send({ difficulty: 'easy' })
+        .expect(201)
+
+      const { id, session_token } = init.body
+      const fakeAnswer = 'a'.repeat(64)
+      const hmac = await hmacSha256Hex(fakeAnswer, session_token)
+
+      const res = await request(app)
+        .post(`/v1/challenge/${id}/solve`)
+        .send({ answer: fakeAnswer, hmac })
+        .expect(200)
+
+      expect(res.body.success).toBe(false)
+      expect(res.body.timing_analysis).toBeUndefined()
+    })
+
+    it('includes timing_analysis when timing is enabled and answer is correct', async () => {
+      const timingApp = express()
+      timingApp.use(express.json())
+
+      const timing: TimingConfig = {
+        enabled: true,
+        defaultTooFastMs: 0,       // disable too_fast rejection for testing
+        defaultAiLowerMs: 50,
+        defaultAiUpperMs: 500,
+        defaultHumanMs: 2000,
+        defaultTimeoutMs: 60000,
+      }
+
+      const timedAuth = new AgentAuth({
+        secret: 'test-secret-that-is-at-least-32-bytes-long-for-hs256',
+        store: new MemoryStore(),
+        drivers: [new CryptoNLDriver()],
+        challengeTtlSeconds: 30,
+        tokenTtlSeconds: 3600,
+        minScore: 0.5,
+        timing,
+      })
+
+      timingApp.post('/v1/challenge/init', timedAuth.challenge())
+      timingApp.get('/v1/challenge/:id', timedAuth.retrieve())
+      timingApp.post('/v1/challenge/:id/solve', timedAuth.verify())
+
+      // 1. Init
+      const init = await request(timingApp)
+        .post('/v1/challenge/init')
+        .send({ difficulty: 'easy' })
+        .expect(201)
+
+      const { id, session_token } = init.body
+
+      // 2. Get challenge and solve it correctly
+      const challengeRes = await request(timingApp)
+        .get(`/v1/challenge/${id}`)
+        .set('Authorization', `Bearer ${session_token}`)
+        .expect(200)
+
+      const answer = await agentSolve(challengeRes.body.payload)
+      const hmac = await hmacSha256Hex(answer, session_token)
+
+      // 3. Submit correct solution
+      const res = await request(timingApp)
+        .post(`/v1/challenge/${id}/solve`)
+        .send({ answer, hmac })
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.timing_analysis).toBeDefined()
+      expect(res.body.timing_analysis.elapsed_ms).toBeTypeOf('number')
+      expect(res.body.timing_analysis.zone).toBeTypeOf('string')
+      expect(['too_fast', 'ai_zone', 'suspicious', 'human', 'timeout']).toContain(
+        res.body.timing_analysis.zone,
+      )
+      expect(res.body.timing_analysis.confidence).toBeTypeOf('number')
+      expect(res.body.timing_analysis.z_score).toBeTypeOf('number')
+      expect(res.body.timing_analysis.penalty).toBeTypeOf('number')
+      expect(res.body.timing_analysis.details).toBeTypeOf('string')
     })
   })
 
