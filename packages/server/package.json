@@ -1,0 +1,31 @@
+{
+  "name": "@agentauth/server",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agentauth/core": "workspace:*",
+    "express": "^5"
+  },
+  "devDependencies": {
+    "@types/express": "^5",
+    "supertest": "^7",
+    "@types/supertest": "^6",
+    "typescript": "^5.7",
+    "vitest": "^3"
+  }
+}

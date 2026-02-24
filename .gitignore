@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# WASM build artifacts
+*.wasm
+pkg/
+
+# Coverage & tests
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+
+# --- NEVER COMMITTED ---
+# Internal planning & AI assistant config
+/phases/
+/docs/plans/
+.claude/
