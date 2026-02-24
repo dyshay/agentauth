@@ -42,6 +42,7 @@ export interface VerifyResult {
   score: AgentCapabilityScore
   token?: string
   reason?: FailReason
+  model_identity?: ModelIdentification
 }
 
 export interface ChallengeData {
@@ -50,6 +51,7 @@ export interface ChallengeData {
   attempts: number
   max_attempts: number
   created_at: number
+  injected_canaries?: Canary[]
 }
 
 export interface ChallengeStore {
@@ -75,6 +77,7 @@ export interface AgentAuthConfig {
   tokenTtlSeconds?: number
   challengeTtlSeconds?: number
   minScore?: number
+  pomi?: PomiConfig
 }
 
 // --- PoMI (Proof of Model Identity) Types ---

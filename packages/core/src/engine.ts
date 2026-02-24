@@ -8,10 +8,16 @@ import type {
   FailReason,
   Difficulty,
   ChallengeDimension,
+  PomiConfig,
+  Canary,
+  ModelIdentification,
 } from './types.js'
 import { generateId, generateSessionToken, hmacSha256Hex, timingSafeEqual } from './crypto.js'
 import { TokenManager, type AgentAuthJWTPayload } from './token.js'
 import { ChallengeRegistry } from './challenges/registry.js'
+import { CanaryCatalog } from './pomi/catalog.js'
+import { CanaryInjector } from './pomi/injector.js'
+import { ModelClassifier } from './pomi/classifier.js'
 
 export interface InitChallengeOptions {
   difficulty?: Difficulty
@@ -28,6 +34,7 @@ export interface InitChallengeResult {
 export interface SolveInput {
   answer: string
   hmac: string
+  canary_responses?: Record<string, string>
   metadata?: { model?: string; framework?: string }
 }
 
@@ -46,6 +53,9 @@ export class AgentAuthEngine {
   private challengeTtlSeconds: number
   private tokenTtlSeconds: number
   private minScore: number
+  private pomiConfig?: PomiConfig
+  private canaryInjector?: CanaryInjector
+  private modelClassifier?: ModelClassifier
 
   constructor(config: AgentAuthConfig) {
     this.store = config.store
@@ -58,6 +68,17 @@ export class AgentAuthEngine {
     // Register all drivers from config (backward compatible)
     for (const driver of config.drivers ?? []) {
       this.registry.register(driver)
+    }
+
+    // Initialize PoMI if enabled
+    if (config.pomi?.enabled) {
+      this.pomiConfig = config.pomi
+      const catalog = new CanaryCatalog(config.pomi.canaries)
+      this.canaryInjector = new CanaryInjector(catalog)
+      this.modelClassifier = new ModelClassifier(
+        config.pomi.modelFamilies ?? ['gpt-4-class', 'claude-3-class', 'gemini-class', 'llama-class', 'mistral-class'],
+        { confidenceThreshold: config.pomi.confidenceThreshold ?? 0.5 },
+      )
     }
   }
 
@@ -76,13 +97,28 @@ export class AgentAuthEngine {
     const expires_at = now + this.challengeTtlSeconds
 
     const payload = await driver.generate(difficulty)
+
+    // Compute answer hash from ORIGINAL payload (before canary injection)
     const answerHash = await driver.computeAnswerHash(payload)
+
+    // Inject canaries if PoMI is enabled
+    let finalPayload = payload
+    let injectedCanaries: Canary[] | undefined
+
+    if (this.canaryInjector && this.pomiConfig) {
+      const injectionResult = this.canaryInjector.inject(
+        payload,
+        this.pomiConfig.canariesPerChallenge ?? 2,
+      )
+      finalPayload = injectionResult.payload
+      injectedCanaries = injectionResult.injected
+    }
 
     const challengeData: ChallengeData = {
       challenge: {
         id,
         session_token,
-        payload,
+        payload: finalPayload,
         difficulty,
         dimensions: [...driver.dimensions],
         created_at: now,
@@ -92,6 +128,7 @@ export class AgentAuthEngine {
       attempts: 0,
       max_attempts: 3,
       created_at: now,
+      injected_canaries: injectedCanaries,
     }
 
     await this.store.set(id, challengeData, this.challengeTtlSeconds)
@@ -149,18 +186,33 @@ export class AgentAuthEngine {
     // Compute capability score
     const score = this.computeScore(data)
 
+    // Classify model identity if PoMI is enabled
+    let modelIdentity: ModelIdentification | undefined
+
+    if (this.modelClassifier && data.injected_canaries) {
+      modelIdentity = this.modelClassifier.classify(
+        data.injected_canaries,
+        input.canary_responses,
+      )
+    }
+
+    // Update model_family in token to use PoMI result if available
+    const modelFamily = modelIdentity?.family !== 'unknown'
+      ? modelIdentity?.family ?? input.metadata?.model ?? 'unknown'
+      : input.metadata?.model ?? 'unknown'
+
     // Generate token
     const token = await this.tokenManager.sign(
       {
         sub: id,
         capabilities: score,
-        model_family: input.metadata?.model ?? 'unknown',
+        model_family: modelFamily,
         challenge_ids: [id],
       },
       { ttlSeconds: this.tokenTtlSeconds },
     )
 
-    return { success: true, score, token }
+    return { success: true, score, token, model_identity: modelIdentity }
   }
 
   async verifyToken(token: string): Promise<VerifyTokenResult> {

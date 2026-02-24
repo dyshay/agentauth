@@ -47,46 +47,6 @@ export const FailReasonSchema = z.enum([
   'rate_limited',
 ])
 
-export const VerifyResultSchema = z.object({
-  success: z.boolean(),
-  score: AgentCapabilityScoreSchema,
-  token: z.string().optional(),
-  reason: FailReasonSchema.optional(),
-})
-
-export const ChallengeDataSchema = z.object({
-  challenge: ChallengeSchema,
-  answer_hash: z.string(),
-  attempts: z.number().int().min(0),
-  max_attempts: z.number().int().positive(),
-  created_at: z.number(),
-})
-
-export const AgentAuthConfigSchema = z.object({
-  secret: z.string().min(1),
-  store: z.custom<import('./types.js').ChallengeStore>(),
-  drivers: z.array(z.custom<import('./types.js').ChallengeDriver>()).optional(),
-  tokenTtlSeconds: z.number().positive().default(3600),
-  challengeTtlSeconds: z.number().positive().default(30),
-  minScore: z.number().min(0).max(1).default(0.7),
-})
-
-export const InitChallengeRequestSchema = z.object({
-  difficulty: DifficultySchema.default('medium'),
-  dimensions: z.array(ChallengeDimensionSchema).optional(),
-})
-
-export const SolveChallengeRequestSchema = z.object({
-  answer: z.string(),
-  hmac: z.string(),
-  metadata: z
-    .object({
-      model: z.string().optional(),
-      framework: z.string().optional(),
-    })
-    .optional(),
-})
-
 // --- PoMI Schemas ---
 
 export const InjectionMethodSchema = z.enum(['inline', 'prefix', 'suffix', 'embedded'])
@@ -155,4 +115,50 @@ export const PomiConfigSchema = z.object({
   canariesPerChallenge: z.number().int().positive().optional(),
   modelFamilies: z.array(z.string()).optional(),
   confidenceThreshold: z.number().min(0).max(1).optional(),
+})
+
+// --- Schemas that reference PoMI types ---
+
+export const VerifyResultSchema = z.object({
+  success: z.boolean(),
+  score: AgentCapabilityScoreSchema,
+  token: z.string().optional(),
+  reason: FailReasonSchema.optional(),
+  model_identity: ModelIdentificationSchema.optional(),
+})
+
+export const ChallengeDataSchema = z.object({
+  challenge: ChallengeSchema,
+  answer_hash: z.string(),
+  attempts: z.number().int().min(0),
+  max_attempts: z.number().int().positive(),
+  created_at: z.number(),
+  injected_canaries: z.array(CanarySchema).optional(),
+})
+
+export const AgentAuthConfigSchema = z.object({
+  secret: z.string().min(1),
+  store: z.custom<import('./types.js').ChallengeStore>(),
+  drivers: z.array(z.custom<import('./types.js').ChallengeDriver>()).optional(),
+  tokenTtlSeconds: z.number().positive().default(3600),
+  challengeTtlSeconds: z.number().positive().default(30),
+  minScore: z.number().min(0).max(1).default(0.7),
+  pomi: PomiConfigSchema.optional(),
+})
+
+export const InitChallengeRequestSchema = z.object({
+  difficulty: DifficultySchema.default('medium'),
+  dimensions: z.array(ChallengeDimensionSchema).optional(),
+})
+
+export const SolveChallengeRequestSchema = z.object({
+  answer: z.string(),
+  hmac: z.string(),
+  canary_responses: z.record(z.string()).optional(),
+  metadata: z
+    .object({
+      model: z.string().optional(),
+      framework: z.string().optional(),
+    })
+    .optional(),
 })

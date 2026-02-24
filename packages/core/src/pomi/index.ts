@@ -1,0 +1,7 @@
+export { CanaryCatalog, DEFAULT_CANARIES, CATALOG_VERSION } from './catalog.js'
+export type { CatalogSelectOptions } from './catalog.js'
+export { CanaryInjector } from './injector.js'
+export type { InjectionResult, InjectOptions } from './injector.js'
+export { CanaryExtractor } from './extractor.js'
+export { ModelClassifier } from './classifier.js'
+export type { ClassifierOptions } from './classifier.js'
