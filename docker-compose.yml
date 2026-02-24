@@ -1,0 +1,14 @@
+services:
+  agentauth:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - AGENTAUTH_SECRET=${AGENTAUTH_SECRET:?Set AGENTAUTH_SECRET (min 32 chars)}
+      - POMI_ENABLED=${POMI_ENABLED:-true}
+      - TIMING_ENABLED=${TIMING_ENABLED:-true}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
