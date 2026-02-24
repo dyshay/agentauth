@@ -179,13 +179,13 @@ export class AgentAuthEngine {
   }
 
   private computeScore(data: ChallengeData): AgentCapabilityScore {
-    // Basic scoring for Phase 1 — timing analysis comes in Phase 4
+    const dims = data.challenge.dimensions
     return {
-      reasoning: 0.9,
-      execution: 0.95,
-      autonomy: 0.9,
-      speed: 0.85,
-      consistency: 0.9,
+      reasoning: dims.includes('reasoning') ? 0.9 : 0.5,
+      execution: dims.includes('execution') ? 0.95 : 0.5,
+      autonomy: 0.9,  // placeholder until Phase 4 timing
+      speed: 0.85,    // placeholder until Phase 4 timing
+      consistency: dims.includes('memory') ? 0.92 : 0.9,
     }
   }
 }
