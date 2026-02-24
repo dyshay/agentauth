@@ -109,6 +109,36 @@ paths:
       responses:
         '200':
           description: Verification result
+          headers:
+            AgentAuth-Status:
+              schema:
+                type: string
+                enum: [verified, unverified]
+              description: Verification status
+            AgentAuth-Score:
+              schema:
+                type: string
+              description: Average capability score (0-1)
+            AgentAuth-Model-Family:
+              schema:
+                type: string
+              description: Identified model family
+            AgentAuth-PoMI-Confidence:
+              schema:
+                type: string
+              description: PoMI classification confidence (0-1)
+            AgentAuth-Capabilities:
+              schema:
+                type: string
+              description: "Comma-separated scores: reasoning=0.94,execution=0.98,..."
+            AgentAuth-Version:
+              schema:
+                type: string
+              description: AgentAuth protocol version
+            AgentAuth-Challenge-Id:
+              schema:
+                type: string
+              description: Challenge identifier
           content:
             application/json:
               schema:
@@ -126,6 +156,32 @@ paths:
       responses:
         '200':
           description: Token is valid
+          headers:
+            AgentAuth-Status:
+              schema:
+                type: string
+                enum: [verified, unverified]
+              description: Verification status
+            AgentAuth-Score:
+              schema:
+                type: string
+              description: Average capability score (0-1)
+            AgentAuth-Model-Family:
+              schema:
+                type: string
+              description: Identified model family
+            AgentAuth-Capabilities:
+              schema:
+                type: string
+              description: "Comma-separated scores: reasoning=0.94,execution=0.98,..."
+            AgentAuth-Version:
+              schema:
+                type: string
+              description: AgentAuth protocol version
+            AgentAuth-Token-Expires:
+              schema:
+                type: string
+              description: Token expiration timestamp
           content:
             application/json:
               schema:
