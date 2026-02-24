@@ -215,14 +215,13 @@ Response time is analyzed to classify the solver and detect humans-in-the-loop o
 
 ```mermaid
 graph LR
-    subgraph Timing Zones
-        TF["< 50ms<br/>TOO FAST<br/>Reject"]
-        AI["50ms–2s<br/>AI ZONE<br/>Accept"]
-        SU["2s–10s<br/>SUSPICIOUS<br/>Penalize"]
-        HU["10s–30s<br/>HUMAN<br/>Penalize"]
-        TO["> 30s<br/>TIMEOUT<br/>Reject"]
-    end
-    TF --> AI --> SU --> HU --> TO
+    TF["< 50ms<br/>TOO FAST<br/>Reject"] --> AI["50ms–2s<br/>AI ZONE<br/>Accept"] --> SU["2s–10s<br/>SUSPICIOUS<br/>Penalize"] --> HU["10s–30s<br/>HUMAN<br/>Penalize"] --> TO["> 30s<br/>TIMEOUT<br/>Reject"]
+
+    style TF fill:#ff6b6b,color:#fff
+    style AI fill:#51cf66,color:#fff
+    style SU fill:#fcc419,color:#333
+    style HU fill:#ff922b,color:#fff
+    style TO fill:#ff6b6b,color:#fff
 ```
 
 | Zone | Penalty | Effect on Score |
