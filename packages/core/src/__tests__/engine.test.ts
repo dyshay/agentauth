@@ -43,7 +43,7 @@ describe('AgentAuthEngine', () => {
       const init = await engine.initChallenge({ difficulty: 'easy' })
       const challenge = await engine.getChallenge(init.id, init.session_token)
       expect(challenge).not.toBeNull()
-      expect(challenge!.payload.context).toBeUndefined()
+      expect((challenge!.payload as Record<string, unknown>).context).toBeUndefined()
     })
 
     it('returns null for wrong session token', async () => {

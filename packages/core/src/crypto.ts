@@ -23,7 +23,7 @@ export function fromHex(hex: string): Uint8Array {
 }
 
 export async function sha256Hex(data: Uint8Array): Promise<string> {
-  const hash = await subtle.digest('SHA-256', data)
+  const hash = await subtle.digest('SHA-256', data as Uint8Array<ArrayBuffer>)
   return toHex(new Uint8Array(hash))
 }
 

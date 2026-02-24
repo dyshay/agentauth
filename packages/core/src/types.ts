@@ -60,7 +60,7 @@ export interface ChallengeStore {
 
 export interface ChallengeDriver {
   name: string
-  dimensions: ChallengeDimension[]
+  dimensions: readonly ChallengeDimension[]
   estimatedHumanTimeMs: number
   estimatedAiTimeMs: number
   generate(difficulty: Difficulty): Promise<ChallengePayload>

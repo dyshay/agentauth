@@ -108,7 +108,7 @@ describe('ChallengeSchema', () => {
         steps: 1,
       },
       difficulty: 'medium' as const,
-      dimensions: ['reasoning', 'execution'] as const[],
+      dimensions: ['reasoning', 'execution'] as const,
       created_at: 1708784370,
       expires_at: 1708784400,
     }
@@ -161,7 +161,7 @@ describe('ChallengeDataSchema', () => {
           steps: 1,
         },
         difficulty: 'medium' as const,
-        dimensions: ['reasoning'] as const[],
+        dimensions: ['reasoning'] as const,
         created_at: 1708784370,
         expires_at: 1708784400,
       },

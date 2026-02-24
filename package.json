@@ -9,6 +9,7 @@
     "clean": "turbo clean"
   },
   "devDependencies": {
+    "@redocly/cli": "^2.19.2",
     "turbo": "^2",
     "typescript": "^5.7"
   }

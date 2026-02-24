@@ -1,0 +1,369 @@
+openapi: '3.1.0'
+info:
+  title: AgentAuth Protocol
+  version: '1.0.0'
+  description: |
+    Authentication protocol for AI agents. Proves an entity is a real AI agent,
+    measures its capabilities, and identifies its model family.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.agentauth.dev/v1
+    description: Production
+  - url: http://localhost:3000/v1
+    description: Local development
+
+security:
+  - apiKey: []
+
+paths:
+  /challenge/init:
+    post:
+      operationId: initChallenge
+      summary: Create a challenge session
+      description: Initiates a new challenge for an AI agent to solve.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitChallengeRequest'
+            example:
+              difficulty: medium
+              dimensions:
+                - reasoning
+                - execution
+      responses:
+        '201':
+          description: Challenge session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitChallengeResponse'
+              example:
+                id: ch_a1b2c3d4e5f6
+                session_token: st_a9b8c7d6e5f4
+                expires_at: 1708784400
+                ttl_seconds: 30
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /challenge/{id}:
+    get:
+      operationId: getChallenge
+      summary: Retrieve a challenge
+      description: Fetches the challenge payload. Requires the session token from init.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^ch_[a-f0-9]+$'
+      responses:
+        '200':
+          description: Challenge payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Challenge'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+
+  /challenge/{id}/solve:
+    post:
+      operationId: solveChallenge
+      summary: Submit a challenge solution
+      description: |
+        Submit the answer along with an HMAC signature computed using the session token.
+        On success, returns a signed JWT with capability scores.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^ch_[a-f0-9]+$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolveChallengeRequest'
+            example:
+              answer: 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+              hmac: 5d41402abc4b2a76b9719d911017c592
+              metadata:
+                model: gpt-4o
+                framework: langchain
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /token/verify:
+    get:
+      operationId: verifyToken
+      summary: Verify an AgentAuth JWT
+      description: Validates a JWT token and returns the embedded capabilities.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenVerifyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-AgentAuth-Key
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Difficulty:
+      type: string
+      enum: [easy, medium, hard, adversarial]
+
+    ChallengeDimension:
+      type: string
+      enum: [reasoning, execution, memory, ambiguity]
+
+    InitChallengeRequest:
+      type: object
+      properties:
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChallengeDimension'
+
+    InitChallengeResponse:
+      type: object
+      required: [id, session_token, expires_at, ttl_seconds]
+      properties:
+        id:
+          type: string
+          pattern: '^ch_[a-f0-9]+$'
+        session_token:
+          type: string
+          pattern: '^st_[a-f0-9]+$'
+        expires_at:
+          type: integer
+          description: Unix timestamp
+        ttl_seconds:
+          type: integer
+
+    ChallengePayload:
+      type: object
+      required: [type, instructions, data, steps]
+      properties:
+        type:
+          type: string
+        instructions:
+          type: string
+        data:
+          type: string
+          description: Base64-encoded data
+        steps:
+          type: integer
+          minimum: 1
+
+    Challenge:
+      type: object
+      required: [id, payload, difficulty, dimensions, created_at, expires_at]
+      properties:
+        id:
+          type: string
+        payload:
+          $ref: '#/components/schemas/ChallengePayload'
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChallengeDimension'
+        created_at:
+          type: integer
+        expires_at:
+          type: integer
+
+    AgentCapabilityScore:
+      type: object
+      required: [reasoning, execution, autonomy, speed, consistency]
+      properties:
+        reasoning:
+          type: number
+          minimum: 0
+          maximum: 1
+        execution:
+          type: number
+          minimum: 0
+          maximum: 1
+        autonomy:
+          type: number
+          minimum: 0
+          maximum: 1
+        speed:
+          type: number
+          minimum: 0
+          maximum: 1
+        consistency:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    FailReason:
+      type: string
+      enum: [wrong_answer, expired, already_used, invalid_hmac, too_fast, too_slow, rate_limited]
+
+    SolveChallengeRequest:
+      type: object
+      required: [answer, hmac]
+      properties:
+        answer:
+          type: string
+        hmac:
+          type: string
+        metadata:
+          type: object
+          properties:
+            model:
+              type: string
+            framework:
+              type: string
+
+    VerifyResult:
+      type: object
+      required: [success, score]
+      properties:
+        success:
+          type: boolean
+        score:
+          $ref: '#/components/schemas/AgentCapabilityScore'
+        token:
+          type: string
+          description: JWT token (present on success)
+        reason:
+          $ref: '#/components/schemas/FailReason'
+        model_family:
+          type: string
+        expires_at:
+          type: integer
+
+    TokenVerifyResponse:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+        capabilities:
+          $ref: '#/components/schemas/AgentCapabilityScore'
+        model_family:
+          type: string
+        issued_at:
+          type: integer
+        expires_at:
+          type: integer
+
+    ProblemDetail:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: https://agentauth.dev/errors/bad-request
+            title: Bad Request
+            status: 400
+            detail: Missing required field 'answer'
+
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: https://agentauth.dev/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: Missing or invalid Authorization header
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Gone:
+      description: Challenge expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: https://agentauth.dev/errors/challenge-expired
+            title: Challenge Expired
+            status: 410
+            detail: Challenge ch_abc123 expired
+
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
