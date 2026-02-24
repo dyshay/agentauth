@@ -1,3 +1,6 @@
 export { CryptoNLDriver } from './crypto-nl.js'
+export { MultiStepDriver } from './multi-step.js'
+export { AmbiguousLogicDriver } from './ambiguous-logic.js'
+export { CodeExecutionDriver } from './code-execution.js'
 export { ChallengeRegistry } from './registry.js'
 export type { SelectOptions } from './registry.js'
