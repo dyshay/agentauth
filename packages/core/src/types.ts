@@ -151,3 +151,45 @@ export interface PomiConfig {
   modelFamilies?: string[]
   confidenceThreshold?: number
 }
+
+// --- Timing Analysis Types ---
+
+export type TimingZone = 'too_fast' | 'ai_zone' | 'suspicious' | 'human' | 'timeout'
+
+export interface TimingBaseline {
+  challenge_type: string
+  difficulty: Difficulty
+  mean_ms: number
+  std_ms: number
+  too_fast_ms: number
+  ai_lower_ms: number
+  ai_upper_ms: number
+  human_ms: number
+  timeout_ms: number
+}
+
+export interface TimingAnalysis {
+  elapsed_ms: number
+  zone: TimingZone
+  confidence: number    // 0-1
+  z_score: number
+  penalty: number       // 0-1, higher = worse
+  details: string
+}
+
+export interface TimingPatternAnalysis {
+  variance_coefficient: number
+  trend: 'constant' | 'increasing' | 'decreasing' | 'variable'
+  round_number_ratio: number
+  verdict: 'natural' | 'artificial' | 'inconclusive'
+}
+
+export interface TimingConfig {
+  enabled: boolean
+  baselines?: TimingBaseline[]
+  defaultTooFastMs?: number
+  defaultAiLowerMs?: number
+  defaultAiUpperMs?: number
+  defaultHumanMs?: number
+  defaultTimeoutMs?: number
+}

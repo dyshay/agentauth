@@ -162,3 +162,45 @@ export const SolveChallengeRequestSchema = z.object({
     })
     .optional(),
 })
+
+// --- Timing Analysis Schemas ---
+
+export const TimingZoneSchema = z.enum(['too_fast', 'ai_zone', 'suspicious', 'human', 'timeout'])
+
+export const TimingBaselineSchema = z.object({
+  challenge_type: z.string(),
+  difficulty: DifficultySchema,
+  mean_ms: z.number().positive(),
+  std_ms: z.number().positive(),
+  too_fast_ms: z.number().nonnegative(),
+  ai_lower_ms: z.number().positive(),
+  ai_upper_ms: z.number().positive(),
+  human_ms: z.number().positive(),
+  timeout_ms: z.number().positive(),
+})
+
+export const TimingAnalysisSchema = z.object({
+  elapsed_ms: z.number().nonnegative(),
+  zone: TimingZoneSchema,
+  confidence: z.number().min(0).max(1),
+  z_score: z.number(),
+  penalty: z.number().min(0).max(1),
+  details: z.string(),
+})
+
+export const TimingPatternAnalysisSchema = z.object({
+  variance_coefficient: z.number().nonnegative(),
+  trend: z.enum(['constant', 'increasing', 'decreasing', 'variable']),
+  round_number_ratio: z.number().min(0).max(1),
+  verdict: z.enum(['natural', 'artificial', 'inconclusive']),
+})
+
+export const TimingConfigSchema = z.object({
+  enabled: z.boolean(),
+  baselines: z.array(TimingBaselineSchema).optional(),
+  defaultTooFastMs: z.number().positive().optional(),
+  defaultAiLowerMs: z.number().positive().optional(),
+  defaultAiUpperMs: z.number().positive().optional(),
+  defaultHumanMs: z.number().positive().optional(),
+  defaultTimeoutMs: z.number().positive().optional(),
+})
