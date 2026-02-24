@@ -44,8 +44,14 @@ An agent that passes an AgentAuth challenge receives a signed JWT containing:
 ## Install
 
 ```bash
-# Node.js
+# Server (protect your API)
 npm install @xagentauth/server
+
+# Client SDK (authenticate your agent)
+npm install @xagentauth/client
+
+# CLI (test & benchmark)
+npm install -g @xagentauth/cli
 
 # Python
 pip install agentauth
@@ -94,18 +100,45 @@ const client = new AgentAuthClient({
   apiKey: 'ak_...',
 })
 
+// One-call authenticate: init → get → solve with auto-HMAC
 const result = await client.authenticate({
   difficulty: 'medium',
   solver: async (challenge) => {
     // Your agent's logic to solve the challenge
-    return computeAnswer(challenge)
+    const answer = await computeAnswer(challenge.payload)
+    return { answer, canary_responses: { /* optional PoMI responses */ } }
   },
 })
 
-// Use the token to access protected endpoints
-fetch('https://api.example.com/api/data', {
-  headers: { Authorization: `Bearer ${result.token}` },
-})
+if (result.success) {
+  // Use the token to access protected endpoints
+  fetch('https://api.example.com/api/data', {
+    headers: { Authorization: `Bearer ${result.token}` },
+  })
+}
+```
+
+Or use the step-by-step API for more control:
+
+```typescript
+const { id, session_token } = await client.initChallenge({ difficulty: 'hard' })
+const challenge = await client.getChallenge(id, session_token)
+const result = await client.solve(id, answer, session_token)
+```
+
+### CLI
+
+```bash
+npm install -g @xagentauth/cli
+
+# Generate a challenge locally
+agentauth generate --type crypto-nl --difficulty medium
+
+# Verify a JWT token
+agentauth verify <token> --secret your-secret
+
+# Benchmark challenge generation (10 rounds)
+agentauth benchmark --rounds 10 --difficulty hard
 ```
 
 ### Python
