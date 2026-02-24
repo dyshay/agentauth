@@ -1,5 +1,23 @@
 # @xagentauth/cli
 
+## 0.2.0
+
+### Minor Changes
+
+- [#6](https://github.com/dyshay/agentauth/pull/6) [`5fd8919`](https://github.com/dyshay/agentauth/commit/5fd8919cdc16f48c6b940156042a0ff073958538) Thanks [@dyshay](https://github.com/dyshay)! - feat: add HTTP headers, Docker self-hosting, and challenge registry
+
+  - Standard AgentAuth-\* HTTP headers injected by server guard/verify middleware
+  - Client SDK parses AgentAuth response headers
+  - Dockerfile and docker-compose.yml for one-command self-hosting
+  - Challenge registry package format (agentauth.json manifest)
+  - Local registry manager with install/uninstall/list/search
+  - CLI commands: add, list, search, publish
+
+### Patch Changes
+
+- Updated dependencies [[`5fd8919`](https://github.com/dyshay/agentauth/commit/5fd8919cdc16f48c6b940156042a0ff073958538)]:
+  - @xagentauth/core@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
