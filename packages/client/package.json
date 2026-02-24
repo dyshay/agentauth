@@ -1,6 +1,6 @@
 {
   "name": "@xagentauth/client",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "TypeScript client SDK for AgentAuth — authenticate AI agents",
   "type": "module",
   "exports": {
@@ -11,7 +11,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "access": "public"
   },
