@@ -64,7 +64,8 @@ export interface ChallengeDriver {
   estimatedHumanTimeMs: number
   estimatedAiTimeMs: number
   generate(difficulty: Difficulty): Promise<ChallengePayload>
-  verify(id: string, answer: unknown): Promise<boolean>
+  computeAnswerHash(payload: ChallengePayload): Promise<string>
+  verify(answerHash: string, submittedAnswer: unknown): Promise<boolean>
 }
 
 export interface AgentAuthConfig {
