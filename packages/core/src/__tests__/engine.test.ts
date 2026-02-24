@@ -140,6 +140,18 @@ describe('AgentAuthEngine', () => {
     })
   })
 
+  describe('registerDriver', () => {
+    it('allows registering drivers at runtime', async () => {
+      const engine = new AgentAuthEngine({
+        secret: 'test-secret-that-is-at-least-32-bytes-long-for-hs256',
+        store: new MemoryStore(),
+      })
+      engine.registerDriver(new CryptoNLDriver())
+      const result = await engine.initChallenge({ difficulty: 'easy' })
+      expect(result.id).toMatch(/^ch_/)
+    })
+  })
+
   describe('verifyToken', () => {
     it('verifies a valid token', async () => {
       const init = await engine.initChallenge({ difficulty: 'easy' })

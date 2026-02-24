@@ -11,6 +11,7 @@ import type {
 } from './types.js'
 import { generateId, generateSessionToken, hmacSha256Hex, timingSafeEqual } from './crypto.js'
 import { TokenManager, type AgentAuthJWTPayload } from './token.js'
+import { ChallengeRegistry } from './challenges/registry.js'
 
 export interface InitChallengeOptions {
   difficulty?: Difficulty
@@ -40,7 +41,7 @@ export interface VerifyTokenResult {
 
 export class AgentAuthEngine {
   private store: ChallengeStore
-  private drivers: ChallengeDriver[]
+  private registry: ChallengeRegistry
   private tokenManager: TokenManager
   private challengeTtlSeconds: number
   private tokenTtlSeconds: number
@@ -48,16 +49,26 @@ export class AgentAuthEngine {
 
   constructor(config: AgentAuthConfig) {
     this.store = config.store
-    this.drivers = config.drivers ?? []
+    this.registry = new ChallengeRegistry()
     this.tokenManager = new TokenManager(config.secret)
     this.challengeTtlSeconds = config.challengeTtlSeconds ?? 30
     this.tokenTtlSeconds = config.tokenTtlSeconds ?? 3600
     this.minScore = config.minScore ?? 0.7
+
+    // Register all drivers from config (backward compatible)
+    for (const driver of config.drivers ?? []) {
+      this.registry.register(driver)
+    }
+  }
+
+  registerDriver(driver: ChallengeDriver): void {
+    this.registry.register(driver)
   }
 
   async initChallenge(options: InitChallengeOptions = {}): Promise<InitChallengeResult> {
     const difficulty = options.difficulty ?? 'medium'
-    const driver = this.selectDriver(options.dimensions)
+    const selected = this.registry.select({ dimensions: options.dimensions })
+    const driver = selected[0]
 
     const id = generateId()
     const session_token = generateSessionToken()
@@ -125,7 +136,7 @@ export class AgentAuthEngine {
     await this.store.delete(id)
 
     // Verify answer
-    const driver = this.findDriver(data.challenge.payload.type)
+    const driver = this.registry.get(data.challenge.payload.type)
     if (!driver) {
       return { success: false, score: zeroScore, reason: 'wrong_answer' }
     }
@@ -165,28 +176,6 @@ export class AgentAuthEngine {
     } catch {
       return { valid: false }
     }
-  }
-
-  private selectDriver(dimensions?: ChallengeDimension[]): ChallengeDriver {
-    if (this.drivers.length === 0) {
-      throw new Error('No challenge drivers registered')
-    }
-    if (!dimensions || dimensions.length === 0) {
-      return this.drivers[0]
-    }
-    // Find driver that covers the most requested dimensions
-    const scored = this.drivers.map((d) => ({
-      driver: d,
-      coverage: d.dimensions.filter((dim) =>
-        dimensions.includes(dim as ChallengeDimension),
-      ).length,
-    }))
-    scored.sort((a, b) => b.coverage - a.coverage)
-    return scored[0].driver
-  }
-
-  private findDriver(type: string): ChallengeDriver | undefined {
-    return this.drivers.find((d) => d.name === type)
   }
 
   private computeScore(data: ChallengeData): AgentCapabilityScore {
