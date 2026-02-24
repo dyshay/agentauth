@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express'
 import {
   AgentAuthEngine,
+  buildHeaders,
   type AgentAuthConfig,
   type InitChallengeOptions,
   type SolveInput,
@@ -89,6 +90,20 @@ export class AgentAuth {
       }
 
       const result = await this.engine.solveChallenge(id, input)
+
+      if (result.success) {
+        const agentHeaders = buildHeaders({
+          status: 'verified',
+          score: result.score,
+          model_family: result.model_identity?.family,
+          pomi_confidence: result.model_identity?.confidence,
+          challenge_id: id,
+        })
+        for (const [name, value] of Object.entries(agentHeaders)) {
+          res.setHeader(name, value)
+        }
+      }
+
       res.json(result)
     }
   }
@@ -158,6 +173,16 @@ export class AgentAuth {
           })
           return
         }
+      }
+
+      const agentHeaders = buildHeaders({
+        status: 'verified',
+        score: result.capabilities,
+        model_family: result.model_family,
+        expires_at: result.expires_at,
+      })
+      for (const [name, value] of Object.entries(agentHeaders)) {
+        res.setHeader(name, value)
       }
 
       next()
