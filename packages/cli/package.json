@@ -1,0 +1,33 @@
+{
+  "name": "@xagentauth/cli",
+  "version": "0.0.1",
+  "description": "CLI tool for AgentAuth — test, benchmark, and generate challenges",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "agentauth": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@xagentauth/core": "workspace:*",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7",
+    "vitest": "^3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
