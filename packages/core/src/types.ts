@@ -43,6 +43,7 @@ export interface VerifyResult {
   token?: string
   reason?: FailReason
   model_identity?: ModelIdentification
+  timing_analysis?: TimingAnalysis
 }
 
 export interface ChallengeData {
@@ -78,6 +79,7 @@ export interface AgentAuthConfig {
   challengeTtlSeconds?: number
   minScore?: number
   pomi?: PomiConfig
+  timing?: TimingConfig
 }
 
 // --- PoMI (Proof of Model Identity) Types ---
