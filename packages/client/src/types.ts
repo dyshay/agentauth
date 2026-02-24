@@ -34,6 +34,7 @@ export interface SolveResponse {
   reason?: string
   model_identity?: ModelIdentification
   timing_analysis?: TimingAnalysis
+  headers?: AgentAuthResponseHeaders
 }
 
 export interface VerifyTokenResponse {
@@ -62,4 +63,16 @@ export interface AuthenticateResult {
   model_identity?: ModelIdentification
   timing_analysis?: TimingAnalysis
   reason?: string
+  headers?: AgentAuthResponseHeaders
+}
+
+export interface AgentAuthResponseHeaders {
+  status?: string
+  score?: number
+  model_family?: string
+  pomi_confidence?: number
+  capabilities?: string
+  version?: string
+  challenge_id?: string
+  token_expires?: number
 }
