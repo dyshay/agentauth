@@ -74,6 +74,7 @@ export class AgentAuth {
       const input: SolveInput = {
         answer: req.body?.answer,
         hmac: req.body?.hmac,
+        canary_responses: req.body?.canary_responses,
         metadata: req.body?.metadata,
       }
 

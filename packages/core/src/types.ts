@@ -42,6 +42,7 @@ export interface VerifyResult {
   score: AgentCapabilityScore
   token?: string
   reason?: FailReason
+  model_identity?: ModelIdentification
 }
 
 export interface ChallengeData {
@@ -50,6 +51,7 @@ export interface ChallengeData {
   attempts: number
   max_attempts: number
   created_at: number
+  injected_canaries?: Canary[]
 }
 
 export interface ChallengeStore {
@@ -75,4 +77,77 @@ export interface AgentAuthConfig {
   tokenTtlSeconds?: number
   challengeTtlSeconds?: number
   minScore?: number
+  pomi?: PomiConfig
+}
+
+// --- PoMI (Proof of Model Identity) Types ---
+
+export type InjectionMethod = 'inline' | 'prefix' | 'suffix' | 'embedded'
+
+export interface CanaryAnalysisExactMatch {
+  type: 'exact_match'
+  expected: Record<string, string>
+}
+
+export interface Distribution {
+  mean: number
+  stddev: number
+}
+
+export interface CanaryAnalysisStatistical {
+  type: 'statistical'
+  distributions: Record<string, Distribution>
+}
+
+export interface CanaryAnalysisPattern {
+  type: 'pattern'
+  patterns: Record<string, string>
+}
+
+export type CanaryAnalysis =
+  | CanaryAnalysisExactMatch
+  | CanaryAnalysisStatistical
+  | CanaryAnalysisPattern
+
+export interface Canary {
+  id: string
+  prompt: string
+  injection_method: InjectionMethod
+  analysis: CanaryAnalysis
+  confidence_weight: number
+}
+
+export interface ModelSignature {
+  model_family: string
+  expected_value: string | number
+  confidence: number
+  last_verified: string
+}
+
+export interface CanaryEvidence {
+  canary_id: string
+  observed: string
+  expected: string
+  match: boolean
+  confidence_contribution: number
+}
+
+export interface ModelIdentification {
+  family: string
+  confidence: number
+  evidence: CanaryEvidence[]
+  alternatives: Array<{ family: string; confidence: number }>
+}
+
+export interface CanaryResponseData {
+  canary_id: string
+  response: string
+}
+
+export interface PomiConfig {
+  enabled: boolean
+  canaries?: Canary[]
+  canariesPerChallenge?: number
+  modelFamilies?: string[]
+  confidenceThreshold?: number
 }

@@ -250,6 +250,11 @@ components:
           type: string
         hmac:
           type: string
+        canary_responses:
+          type: object
+          additionalProperties:
+            type: string
+          description: Responses to canary prompts for Proof of Model Identity (PoMI)
         metadata:
           type: object
           properties:
@@ -273,6 +278,8 @@ components:
           $ref: '#/components/schemas/FailReason'
         model_family:
           type: string
+        model_identity:
+          $ref: '#/components/schemas/ModelIdentification'
         expires_at:
           type: integer
 
@@ -290,6 +297,45 @@ components:
           type: integer
         expires_at:
           type: integer
+
+    CanaryEvidence:
+      type: object
+      properties:
+        canary_id:
+          type: string
+        observed:
+          type: string
+        expected:
+          type: string
+        match:
+          type: boolean
+        confidence_contribution:
+          type: number
+
+    ModelIdentification:
+      type: object
+      properties:
+        family:
+          type: string
+          description: Identified model family (e.g., "gpt-4-class", "claude-3-class", "unknown")
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence of the identification (0-1)
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/CanaryEvidence'
+        alternatives:
+          type: array
+          items:
+            type: object
+            properties:
+              family:
+                type: string
+              confidence:
+                type: number
 
     ProblemDetail:
       type: object

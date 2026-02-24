@@ -66,6 +66,7 @@ const app = express()
 const auth = new AgentAuth({
   secret: process.env.AGENTAUTH_SECRET,
   store: new MemoryStore(),
+  pomi: { enabled: true },
 })
 
 // Challenge endpoint — agents call this first
@@ -129,32 +130,27 @@ async def protected():
 
 ## How It Works
 
-```
-Agent                          AgentAuth Server                 Protected API
-  │                                  │                               │
-  │  POST /v1/challenge/init         │                               │
-  │ ────────────────────────────────>│                               │
-  │                                  │  Generate challenge            │
-  │          Challenge payload       │  (NL instructions + data)      │
-  │ <────────────────────────────────│                               │
-  │                                  │                               │
-  │  [Agent solves challenge]        │                               │
-  │  (50ms - 2s for AI agents)       │                               │
-  │                                  │                               │
-  │  POST /v1/challenge/{id}/solve   │                               │
-  │ ────────────────────────────────>│                               │
-  │                                  │  Verify answer                 │
-  │                                  │  Analyze timing                │
-  │                                  │  Score capabilities            │
-  │          JWT token + scores      │  Identify model                │
-  │ <────────────────────────────────│                               │
-  │                                  │                               │
-  │  GET /api/data                   │                               │
-  │  Authorization: Bearer <jwt>     │                               │
-  │ ─────────────────────────────────────────────────────────────────>│
-  │                                  │                               │
-  │                      Protected data                              │
-  │ <─────────────────────────────────────────────────────────────────│
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant AgentAuth as AgentAuth Server
+    participant API as Protected API
+
+    Agent->>AgentAuth: POST /v1/challenge/init
+    AgentAuth-->>Agent: Challenge payload (NL instructions + data + canary prompts)
+
+    Note over Agent: Agent solves challenge (50ms - 2s)
+    Note over Agent: Agent answers canary prompts
+
+    Agent->>AgentAuth: POST /v1/challenge/{id}/solve
+    Note over AgentAuth: Verify answer
+    Note over AgentAuth: Analyze timing
+    Note over AgentAuth: Score capabilities
+    Note over AgentAuth: Classify model (PoMI)
+    AgentAuth-->>Agent: JWT token + scores + model identity
+
+    Agent->>API: GET /api/data (Authorization: Bearer <jwt>)
+    API-->>Agent: Protected data
 ```
 
 ### Challenge Types
@@ -176,6 +172,55 @@ Autonomy     ███████████████████░░░ 
 Speed        █████████████████░░░░░  0.87  — Response time vs baseline
 Consistency  ████████████████████░░  0.95  — Same agent, same results
 ```
+
+### Proof of Model Identity (PoMI)
+
+AgentAuth doesn't just verify that *something* solved a challenge — it identifies *which model family* did it.
+
+**How it works:** Canary prompts are seamlessly embedded into challenges. Each model family has subtle behavioral fingerprints — different "random" number biases, reasoning styles, formatting preferences. AgentAuth's Bayesian classifier analyzes these signals to identify the model.
+
+```mermaid
+graph LR
+    C[Challenge + Canary Prompts] --> Agent
+    Agent --> R[Solution + Canary Responses]
+    R --> E[Canary Extractor]
+    E --> B[Bayesian Classifier]
+    B --> ID["Model Identity<br/>family: gpt-4-class<br/>confidence: 0.87"]
+```
+
+The verify response includes model identification:
+
+```json
+{
+  "success": true,
+  "token": "eyJhbGc...",
+  "capabilities": { "reasoning": 0.94, "execution": 0.98, "...": "..." },
+  "model_identity": {
+    "family": "gpt-4-class",
+    "confidence": 0.87,
+    "evidence": [
+      { "canary_id": "random-numbers-5", "match": true },
+      { "canary_id": "reasoning-style", "match": true }
+    ],
+    "alternatives": [
+      { "family": "claude-3-class", "confidence": 0.09 }
+    ]
+  }
+}
+```
+
+**Canary categories:**
+
+| Category | Signal Type | Example |
+|----------|-----------|---------|
+| Random number distribution | Statistical | Each model has biases in "random" choices |
+| Reasoning chain structure | Pattern | "Therefore..." vs "Let me think..." |
+| Formatting preferences | Pattern | Bullet style, markdown conventions |
+| Mathematical precision | Exact match | `0.1 + 0.2` → `0.3` vs `0.30000000000000004` |
+| Unicode handling | Exact match | RTL/ZWJ character interpretation |
+| Default word choices | Statistical | Greeting style, emoji preferences |
+
+**Anti-spoofing:** Canaries are rotated each challenge, use multiple signal types simultaneously, and are obfuscated to look like legitimate challenge parts. Multi-canary Bayesian inference makes spoofing statistically difficult.
 
 ### Timing Analysis
 
@@ -209,7 +254,8 @@ AgentAuth defines standard headers for the agentic web:
 ```http
 AgentAuth-Status: verified
 AgentAuth-Score: 0.94
-AgentAuth-Model-Family: frontier
+AgentAuth-Model-Family: gpt-4-class
+AgentAuth-PoMI-Confidence: 0.87
 AgentAuth-Capabilities: reasoning=0.94,execution=0.98,autonomy=0.91
 ```
 
@@ -237,26 +283,19 @@ services:
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                  AgentAuth Protocol v1                     │
-│                    (Open Specification)                    │
-└────────────────────────────┬─────────────────────────────┘
-                             │
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
-    ┌─────▼──────┐   ┌──────▼───────┐   ┌──────▼──────┐
-    │ Self-host  │   │  Cloud API   │   │   Edge      │
-    │ (Docker)   │   │  (SaaS)      │   │ (CF Workers)│
-    └─────┬──────┘   └──────┬───────┘   └──────┬──────┘
-          └──────────────────┼──────────────────┘
-                             │
-               ┌─────────────▼──────────────┐
-               │       SDK Ecosystem         │
-               │  TypeScript · Python · Go   │
-               │  LangChain · CrewAI plugin  │
-               │  OpenAI function-call fmt   │
-               └────────────────────────────┘
+```mermaid
+graph TB
+    Protocol["AgentAuth Protocol v1<br/>(Open Specification)"]
+
+    Protocol --> SelfHost["Self-host<br/>(Docker)"]
+    Protocol --> Cloud["Cloud API<br/>(SaaS)"]
+    Protocol --> Edge["Edge<br/>(CF Workers)"]
+
+    SelfHost --> SDK
+    Cloud --> SDK
+    Edge --> SDK
+
+    SDK["SDK Ecosystem<br/>TypeScript · Python · Go<br/>LangChain · CrewAI plugin<br/>OpenAI function-call fmt"]
 ```
 
 ## Packages

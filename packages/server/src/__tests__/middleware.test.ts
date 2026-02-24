@@ -141,6 +141,37 @@ describe('Express middleware', () => {
     })
   })
 
+  describe('POST /v1/challenge/:id/solve with canary_responses', () => {
+    it('passes canary_responses to engine in solve request', async () => {
+      const init = await request(app)
+        .post('/v1/challenge/init')
+        .send({ difficulty: 'easy' })
+        .expect(201)
+
+      const { id, session_token } = init.body
+
+      const fakeAnswer = 'a'.repeat(64)
+      const hmac = await hmacSha256Hex(fakeAnswer, session_token)
+
+      const res = await request(app)
+        .post(`/v1/challenge/${id}/solve`)
+        .send({
+          answer: fakeAnswer,
+          hmac,
+          canary_responses: {
+            'canary-1': 'response-1',
+            'canary-2': 'response-2',
+          },
+        })
+        .expect(200)
+
+      // The endpoint should accept canary_responses without error
+      // Answer is wrong but that's fine — we're testing the middleware accepts the field
+      expect(res.body.success).toBe(false)
+      expect(res.body.reason).toBe('wrong_answer')
+    })
+  })
+
   describe('GET /protected (guard)', () => {
     it('rejects request without token', async () => {
       await request(app).get('/protected').expect(401)
