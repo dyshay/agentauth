@@ -41,49 +41,128 @@ console.log(verified.capabilities)`,
   python: {
     name: 'Python',
     package: 'xagentauth',
-    install: 'pip install xagentauth',
+    install: `pip install xagentauth
+
+# With LangChain integration
+pip install xagentauth[langchain]
+
+# With CrewAI integration
+pip install xagentauth[crewai]`,
     installLang: 'bash',
-    usage: `from xagentauth import AgentAuthClient
+    usage: `import asyncio
+from xagentauth import AgentAuthClient
 
-client = AgentAuthClient(
-    server_url="https://your-server.com"
-)
+async def main():
+    client = AgentAuthClient(
+        base_url="https://api.example.com",
+        api_key="ak_...",
+    )
 
-# Full authentication flow
-token = await client.authenticate()
+    # One-call flow: init -> get -> solve
+    result = await client.authenticate(
+        difficulty="medium",
+        solver=my_solver,
+    )
 
-# Use the token
-headers = {"Authorization": f"Bearer {token}"}`,
-    usageLang: 'typescript',
-    status: 'planned',
+    print(f"Token: {result.token}")
+    print(f"Score: {result.score}")
+
+    # Or step by step
+    init = await client.init_challenge(difficulty="hard")
+    challenge = await client.get_challenge(init.id, init.session_token)
+    answer = await compute_answer(challenge.payload)
+    result = await client.solve(init.id, answer, init.session_token)
+
+asyncio.run(main())`,
+    usageLang: 'python',
+    status: 'stable',
   },
   rust: {
     name: 'Rust',
     package: 'xagentauth',
     install: 'cargo add xagentauth',
     installLang: 'bash',
-    usage: `use xagentauth::AgentAuthClient;
+    usage: `use xagentauth::{AgentAuthClient, ClientConfig, Difficulty};
 
-let client = AgentAuthClient::new("https://your-server.com");
+#[tokio::main]
+async fn main() -> Result<(), xagentauth::AgentAuthError> {
+    let client = AgentAuthClient::new(ClientConfig {
+        base_url: "https://api.example.com".to_string(),
+        api_key: Some("ak_...".to_string()),
+        timeout_ms: None,
+    })?;
 
-// Full authentication flow
-let token = client.authenticate().await?;`,
-    usageLang: 'typescript',
-    status: 'planned',
+    // One-call flow: init -> get -> solve
+    let result = client
+        .authenticate(Some(Difficulty::Medium), None, |challenge| async move {
+            let answer = compute_answer(&challenge.payload).await;
+            Ok((answer, None))
+        })
+        .await?;
+
+    println!("Token: {:?}", result.token);
+    println!("Score: {:?}", result.score);
+
+    // Or step by step
+    let init = client.init_challenge(Some(Difficulty::Hard), None).await?;
+    let challenge = client.get_challenge(&init.id, &init.session_token).await?;
+    let answer = compute_answer(&challenge.payload).await;
+    let (result, headers) = client
+        .solve(&init.id, &answer, &init.session_token, None, None)
+        .await?;
+
+    Ok(())
+}`,
+    usageLang: 'rust',
+    status: 'stable',
   },
   go: {
     name: 'Go',
-    package: 'github.com/dyshay/agentauth-go',
-    install: 'go get github.com/dyshay/agentauth-go',
+    package: 'github.com/dyshay/agentauth/sdks/go',
+    install: 'go get github.com/dyshay/agentauth/sdks/go',
     installLang: 'bash',
-    usage: `import "github.com/dyshay/agentauth-go"
+    usage: `package main
 
-client := agentauth.NewClient("https://your-server.com")
+import (
+    "fmt"
+    "log"
 
-// Full authentication flow
-token, err := client.Authenticate(ctx)`,
-    usageLang: 'typescript',
-    status: 'planned',
+    "github.com/dyshay/agentauth/sdks/go"
+)
+
+func main() {
+    client := xagentauth.NewClient(xagentauth.ClientConfig{
+        BaseURL:   "https://auth.example.com",
+        APIKey:    "your-api-key",
+        TimeoutMs: 30000,
+    })
+
+    // Define a solver function
+    solver := func(challenge xagentauth.ChallengeResponse) (string, map[string]string, error) {
+        answer := solveChallenge(challenge.Payload)
+        return answer, nil, nil
+    }
+
+    // One-call flow
+    result, err := client.Authenticate(
+        xagentauth.DifficultyMedium,
+        []xagentauth.ChallengeDimension{
+            xagentauth.DimensionReasoning,
+            xagentauth.DimensionExecution,
+        },
+        solver,
+    )
+    if err != nil {
+        log.Fatalf("Authentication failed: %v", err)
+    }
+
+    if result.Success {
+        fmt.Printf("Token: %s\\n", *result.Token)
+        fmt.Printf("Scores: %+v\\n", result.Score)
+    }
+}`,
+    usageLang: 'go',
+    status: 'stable',
   },
 }
 
