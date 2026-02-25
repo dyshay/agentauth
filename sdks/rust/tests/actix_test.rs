@@ -1,3 +1,5 @@
+#![cfg(feature = "actix")]
+
 use actix_web::{test, web, App, HttpResponse};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use std::time::{SystemTime, UNIX_EPOCH};

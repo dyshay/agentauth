@@ -1,3 +1,5 @@
+#![cfg(feature = "axum")]
+
 use axum::{routing::get, Router};
 use http::{Request, StatusCode};
 use jsonwebtoken::{encode, EncodingKey, Header};
