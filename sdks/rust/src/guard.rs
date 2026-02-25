@@ -1,3 +1,4 @@
+use crate::headers::{format_capabilities, names as header_names};
 use crate::token::{AgentAuthClaims, TokenError, TokenVerifier};
 
 #[derive(Debug, Clone)]
@@ -62,15 +63,25 @@ pub fn verify_request(token: &str, config: &GuardConfig) -> Result<GuardResult, 
     }
 
     let mut headers = vec![
-        ("AgentAuth-Status".into(), "verified".into()),
-        ("AgentAuth-Score".into(), format!("{avg:.2}")),
-        ("AgentAuth-Model-Family".into(), claims.model_family.clone()),
-        ("AgentAuth-Version".into(), claims.agentauth_version.clone()),
+        (header_names::STATUS.into(), "verified".into()),
+        (header_names::SCORE.into(), format!("{avg:.2}")),
+        (
+            header_names::MODEL_FAMILY.into(),
+            claims.model_family.clone(),
+        ),
+        (
+            header_names::VERSION.into(),
+            claims.agentauth_version.clone(),
+        ),
+        (
+            header_names::CAPABILITIES.into(),
+            format_capabilities(&claims.capabilities),
+        ),
     ];
     if let Some(cid) = claims.challenge_ids.first() {
-        headers.push(("AgentAuth-Challenge-ID".into(), cid.clone()));
+        headers.push((header_names::CHALLENGE_ID.into(), cid.clone()));
     }
-    headers.push(("AgentAuth-Token-Expires".into(), claims.exp.to_string()));
+    headers.push((header_names::TOKEN_EXPIRES.into(), claims.exp.to_string()));
 
     Ok(GuardResult { claims, headers })
 }
@@ -129,6 +140,26 @@ mod tests {
             .headers
             .iter()
             .any(|(k, v)| k == "AgentAuth-Status" && v == "verified"));
+        // Check capabilities header is present and well-formed
+        let caps_header = result
+            .headers
+            .iter()
+            .find(|(k, _)| k == "AgentAuth-Capabilities")
+            .expect("AgentAuth-Capabilities header must be present");
+        assert!(caps_header.1.contains("reasoning=0.9"));
+        assert!(caps_header.1.contains("execution=0.85"));
+        assert!(caps_header.1.contains("autonomy=0.8"));
+        assert!(caps_header.1.contains("speed=0.75"));
+        assert!(caps_header.1.contains("consistency=0.88"));
+        // Verify Challenge-Id uses correct casing (not Challenge-ID)
+        let cid_header = result
+            .headers
+            .iter()
+            .find(|(k, _)| k == "AgentAuth-Challenge-Id");
+        assert!(
+            cid_header.is_some(),
+            "AgentAuth-Challenge-Id header must be present"
+        );
     }
 
     #[test]
