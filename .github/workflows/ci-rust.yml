@@ -1,0 +1,30 @@
+name: CI — Rust
+
+on:
+  push:
+    branches: [main]
+    paths: [sdks/rust/**]
+  pull_request:
+    branches: [main]
+    paths: [sdks/rust/**]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdks/rust
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: sdks/rust
+
+      - run: cargo fmt --check
+
+      - run: cargo clippy -- -D warnings
+
+      - run: cargo test
