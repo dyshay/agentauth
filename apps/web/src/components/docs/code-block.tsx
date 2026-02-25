@@ -7,7 +7,7 @@ function getHighlighter() {
     highlighterPromise = import('shiki').then((mod) =>
       mod.createHighlighter({
         themes: ['vitesse-dark'],
-        langs: ['typescript', 'bash', 'json', 'yaml', 'dockerfile'],
+        langs: ['typescript', 'bash', 'json', 'yaml', 'dockerfile', 'python', 'rust', 'go', 'toml'],
       }),
     )
   }
@@ -25,8 +25,16 @@ export function CodeBlock({ code, lang = 'typescript', filename }: CodeBlockProp
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    getHighlighter().then((hl) => {
+    setHtml('')
+    getHighlighter().then(async (hl) => {
+      const loaded = hl.getLoadedLanguages() as string[]
+      if (!loaded.includes(lang)) {
+        await hl.loadLanguage(lang)
+      }
       setHtml(hl.codeToHtml(code.trim(), { lang, theme: 'vitesse-dark' }))
+    }).catch(() => {
+      // Fallback: show plain code if highlighting fails
+      setHtml('')
     })
   }, [code, lang])
 

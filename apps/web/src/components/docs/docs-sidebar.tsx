@@ -44,7 +44,7 @@ const sections: SidebarSection[] = [
   {
     title: 'Reference',
     items: [
-      { label: 'API Reference', to: '/api-reference', external: true },
+      { label: 'API Reference', to: 'https://agentauth.vercel.app/api-reference', external: true },
     ],
   },
 ]

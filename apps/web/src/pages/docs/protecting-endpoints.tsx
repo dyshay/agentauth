@@ -152,6 +152,219 @@ export class DataController {
 
       <hr />
 
+      <h2>FastAPI (Python)</h2>
+      <p>
+        The Python SDK provides a FastAPI dependency that extracts and verifies the Bearer token.
+        Install with the <code>[fastapi]</code> extra.
+      </p>
+      <CodeBlock
+        lang="bash"
+        code={`pip install xagentauth[fastapi]`}
+      />
+      <CodeBlock
+        lang="python"
+        filename="server.py"
+        code={`from fastapi import Depends, FastAPI
+from xagentauth.middleware.fastapi import agentauth_guard
+from xagentauth.token import AgentAuthClaims
+
+app = FastAPI()
+
+# Protect a route — reject tokens with avg score < 0.7
+@app.get("/api/data", dependencies=[Depends(agentauth_guard("your-secret"))])
+def get_data():
+    return {"message": "Hello, verified agent!"}
+
+# Access claims in the handler
+@app.get("/api/profile")
+def get_profile(claims: AgentAuthClaims = Depends(agentauth_guard("your-secret"))):
+    return {"model": claims.model_family, "agent": claims.sub}`}
+      />
+
+      <hr />
+
+      <h2>Flask (Python)</h2>
+      <p>
+        The Flask adapter uses a decorator pattern. Claims are stored
+        in <code>flask.g.agentauth_claims</code>.
+      </p>
+      <CodeBlock
+        lang="bash"
+        code={`pip install xagentauth[flask]`}
+      />
+      <CodeBlock
+        lang="python"
+        filename="server.py"
+        code={`from flask import Flask, g, jsonify
+from xagentauth.middleware.flask import agentauth_required
+
+app = Flask(__name__)
+
+@app.route("/api/data")
+@agentauth_required("your-secret", min_score=0.7)
+def get_data():
+    claims = g.agentauth_claims
+    return jsonify({"model": claims.model_family})`}
+      />
+
+      <hr />
+
+      <h2>Axum (Rust)</h2>
+      <p>
+        The Rust SDK provides a Tower layer and an extractor for Axum.
+        Enable the <code>axum</code> feature in <code>Cargo.toml</code>.
+      </p>
+      <CodeBlock
+        lang="toml"
+        filename="Cargo.toml"
+        code={`[dependencies]
+xagentauth = { version = "0.1", features = ["axum"] }`}
+      />
+      <CodeBlock
+        lang="rust"
+        filename="main.rs"
+        code={`use axum::{routing::get, Router};
+use xagentauth::guard::GuardConfig;
+use xagentauth::middleware::axum::{agentauth_layer, AgentAuthToken};
+
+async fn handler(token: AgentAuthToken) -> String {
+    format!("Hello, {} (model: {})", token.0.sub, token.0.model_family)
+}
+
+#[tokio::main]
+async fn main() {
+    let config = GuardConfig::new("your-secret").with_min_score(0.7);
+    let app = Router::new()
+        .route("/api/data", get(handler))
+        .layer(agentauth_layer(config));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}`}
+      />
+
+      <hr />
+
+      <h2>Actix (Rust)</h2>
+      <p>
+        For Actix-web, enable the <code>actix</code> feature. The middleware wraps your app
+        and provides an <code>AgentAuthToken</code> extractor.
+      </p>
+      <CodeBlock
+        lang="toml"
+        filename="Cargo.toml"
+        code={`[dependencies]
+xagentauth = { version = "0.1", features = ["actix"] }`}
+      />
+      <CodeBlock
+        lang="rust"
+        filename="main.rs"
+        code={`use actix_web::{web, App, HttpServer};
+use xagentauth::guard::GuardConfig;
+use xagentauth::middleware::actix::{AgentAuthMiddleware, AgentAuthToken};
+
+async fn handler(token: AgentAuthToken) -> String {
+    format!("Hello, {} (model: {})", token.0.sub, token.0.model_family)
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let config = GuardConfig::new("your-secret").with_min_score(0.7);
+    HttpServer::new(move || {
+        App::new()
+            .wrap(AgentAuthMiddleware::new(config.clone()))
+            .route("/api/data", web::get().to(handler))
+    })
+    .bind("0.0.0.0:3000")?
+    .run()
+    .await
+}`}
+      />
+
+      <hr />
+
+      <h2>net/http (Go)</h2>
+      <p>
+        The Go SDK provides stdlib-only middleware with zero external dependencies.
+        Claims are stored in the request context.
+      </p>
+      <CodeBlock
+        lang="bash"
+        code={`go get github.com/dyshay/agentauth/sdks/go`}
+      />
+      <CodeBlock
+        lang="go"
+        filename="main.go"
+        code={`package main
+
+import (
+    "encoding/json"
+    "net/http"
+
+    "github.com/dyshay/agentauth/sdks/go"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    claims := xagentauth.ClaimsFromContext(r.Context())
+    json.NewEncoder(w).Encode(map[string]string{
+        "model": claims.ModelFamily,
+        "agent": claims.Sub,
+    })
+}
+
+func main() {
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/data", handler)
+
+    protected := xagentauth.AgentAuthMiddleware(xagentauth.GuardConfig{
+        Secret:   "your-secret",
+        MinScore: 0.7,
+    })(mux)
+
+    http.ListenAndServe(":3000", protected)
+}`}
+      />
+
+      <hr />
+
+      <h2>Gin (Go)</h2>
+      <p>
+        For Gin, use the separate <code>ginauth</code> submodule to avoid pulling Gin
+        as a dependency into the main SDK.
+      </p>
+      <CodeBlock
+        lang="bash"
+        code={`go get github.com/dyshay/agentauth/sdks/go/ginauth`}
+      />
+      <CodeBlock
+        lang="go"
+        filename="main.go"
+        code={`package main
+
+import (
+    "github.com/dyshay/agentauth/sdks/go"
+    "github.com/dyshay/agentauth/sdks/go/ginauth"
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    r := gin.Default()
+    r.Use(ginauth.AgentAuthMiddleware(xagentauth.GuardConfig{
+        Secret:   "your-secret",
+        MinScore: 0.7,
+    }))
+
+    r.GET("/api/data", func(c *gin.Context) {
+        claims := ginauth.GetClaims(c)
+        c.JSON(200, gin.H{"model": claims.ModelFamily})
+    })
+
+    r.Run(":3000")
+}`}
+      />
+
+      <hr />
+
       <h2>Cloudflare Workers</h2>
       <p>
         Cloudflare Workers don't use Express or Hono middleware directly, but you can use
