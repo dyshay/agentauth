@@ -56,12 +56,12 @@ type InitChallengeResponse struct {
 
 // ChallengeResponse contains the full challenge details.
 type ChallengeResponse struct {
-	ID         string             `json:"id"`
-	Payload    ChallengePayload   `json:"payload"`
-	Difficulty Difficulty         `json:"difficulty"`
+	ID         string               `json:"id"`
+	Payload    ChallengePayload     `json:"payload"`
+	Difficulty Difficulty           `json:"difficulty"`
 	Dimensions []ChallengeDimension `json:"dimensions"`
-	CreatedAt  int64              `json:"created_at"`
-	ExpiresAt  int64              `json:"expires_at"`
+	CreatedAt  int64                `json:"created_at"`
+	ExpiresAt  int64                `json:"expires_at"`
 }
 
 // ModelIdentification contains information about the identified model.
@@ -99,10 +99,10 @@ type TimingAnalysis struct {
 
 // SolveRequest is the request to solve a challenge.
 type SolveRequest struct {
-	Answer           string            `json:"answer"`
-	HMAC             string            `json:"hmac"`
-	CanaryResponses  map[string]string `json:"canary_responses,omitempty"`
-	Metadata         *SolveMetadata    `json:"metadata,omitempty"`
+	Answer          string            `json:"answer"`
+	HMAC            string            `json:"hmac"`
+	CanaryResponses map[string]string `json:"canary_responses,omitempty"`
+	Metadata        *SolveMetadata    `json:"metadata,omitempty"`
 }
 
 // SolveMetadata contains optional metadata about the solving agent.
@@ -113,12 +113,12 @@ type SolveMetadata struct {
 
 // SolveResponse is the response from solving a challenge.
 type SolveResponse struct {
-	Success        bool                  `json:"success"`
-	Score          AgentCapabilityScore  `json:"score"`
-	Token          *string               `json:"token,omitempty"`
-	Reason         *string               `json:"reason,omitempty"`
-	ModelIdentity  *ModelIdentification  `json:"model_identity,omitempty"`
-	TimingAnalysis *TimingAnalysis       `json:"timing_analysis,omitempty"`
+	Success        bool                 `json:"success"`
+	Score          AgentCapabilityScore `json:"score"`
+	Token          *string              `json:"token,omitempty"`
+	Reason         *string              `json:"reason,omitempty"`
+	ModelIdentity  *ModelIdentification `json:"model_identity,omitempty"`
+	TimingAnalysis *TimingAnalysis      `json:"timing_analysis,omitempty"`
 }
 
 // VerifyTokenResponse is the response from verifying a token.
@@ -144,13 +144,13 @@ type AgentAuthHeaders struct {
 
 // AuthenticateResult contains the complete authentication result.
 type AuthenticateResult struct {
-	Success        bool                  `json:"success"`
-	Token          *string               `json:"token,omitempty"`
-	Score          AgentCapabilityScore  `json:"score"`
-	ModelIdentity  *ModelIdentification  `json:"model_identity,omitempty"`
-	TimingAnalysis *TimingAnalysis       `json:"timing_analysis,omitempty"`
-	Reason         *string               `json:"reason,omitempty"`
-	Headers        *AgentAuthHeaders     `json:"headers,omitempty"`
+	Success        bool                 `json:"success"`
+	Token          *string              `json:"token,omitempty"`
+	Score          AgentCapabilityScore `json:"score"`
+	ModelIdentity  *ModelIdentification `json:"model_identity,omitempty"`
+	TimingAnalysis *TimingAnalysis      `json:"timing_analysis,omitempty"`
+	Reason         *string              `json:"reason,omitempty"`
+	Headers        *AgentAuthHeaders    `json:"headers,omitempty"`
 }
 
 // ClientConfig contains configuration for the AgentAuth client.
@@ -266,10 +266,10 @@ type SessionTimingAnomaly struct {
 
 // PomiConfig holds PoMI system configuration.
 type PomiConfig struct {
-	Enabled              bool     `json:"enabled"`
-	CanaryCount          int      `json:"canary_count"`
-	ConfidenceThreshold  float64  `json:"confidence_threshold"`
-	ModelFamilies        []string `json:"model_families,omitempty"`
+	Enabled             bool     `json:"enabled"`
+	CanaryCount         int      `json:"canary_count"`
+	ConfidenceThreshold float64  `json:"confidence_threshold"`
+	ModelFamilies       []string `json:"model_families,omitempty"`
 }
 
 // TimingConfig holds timing analysis configuration.
@@ -332,7 +332,7 @@ type VerifyTokenResult struct {
 type ChallengeData struct {
 	ID                string               `json:"id"`
 	ChallengeType     string               `json:"challenge_type"`
-	Difficulty        Difficulty            `json:"difficulty"`
+	Difficulty        Difficulty           `json:"difficulty"`
 	Dimensions        []ChallengeDimension `json:"dimensions"`
 	Payload           ChallengePayload     `json:"payload"`
 	AnswerHash        string               `json:"answer_hash"`
@@ -349,7 +349,7 @@ type ChallengeData struct {
 type ChallengeInner struct {
 	ID         string               `json:"id"`
 	Payload    ChallengePayload     `json:"payload"`
-	Difficulty Difficulty            `json:"difficulty"`
+	Difficulty Difficulty           `json:"difficulty"`
 	Dimensions []ChallengeDimension `json:"dimensions"`
 	CreatedAt  int64                `json:"created_at"`
 	ExpiresAt  int64                `json:"expires_at"`

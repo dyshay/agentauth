@@ -22,11 +22,11 @@ type Engine struct {
 
 	// These are interfaces so subpackages can provide implementations
 	// without import cycles. The engine calls them through function fields.
-	pomiInjectFunc   func(payload ChallengePayload, count int) (ChallengePayload, []Canary)
-	pomiClassifyFunc func(canaries []Canary, responses map[string]string) ModelIdentification
-	timingAnalyzeFunc func(elapsedMs float64, challengeType string, difficulty Difficulty, rttMs float64) TimingAnalysis
-	timingPatternFunc func(stepTimings []float64) TimingPatternAnalysis
-	sessionRecordFunc func(sessionID string, elapsedMs float64, zone TimingZone)
+	pomiInjectFunc     func(payload ChallengePayload, count int) (ChallengePayload, []Canary)
+	pomiClassifyFunc   func(canaries []Canary, responses map[string]string) ModelIdentification
+	timingAnalyzeFunc  func(elapsedMs float64, challengeType string, difficulty Difficulty, rttMs float64) TimingAnalysis
+	timingPatternFunc  func(stepTimings []float64) TimingPatternAnalysis
+	sessionRecordFunc  func(sessionID string, elapsedMs float64, zone TimingZone)
 	sessionAnalyzeFunc func(sessionID string) []SessionTimingAnomaly
 }
 

@@ -21,12 +21,12 @@ type bugDef struct {
 }
 
 var (
-	bugOffByOne     = bugDef{Name: "off_by_one", Description: "Uses % 255 instead of % 256 in modulo operation"}
-	bugWrongOp      = bugDef{Name: "wrong_operator", Description: "Uses + (addition) instead of ^ (XOR) as the accumulator operator"}
-	bugMissingStep  = bugDef{Name: "missing_step", Description: "Missing byte reversal between hash rounds"}
-	bugWrongInit    = bugDef{Name: "wrong_init", Description: "Accumulator initialized to 1 instead of 0"}
-	bugWrongPad     = bugDef{Name: "wrong_pad", Description: "padStart uses length 1 instead of 2 for hex encoding"}
-	bugWrongShift   = bugDef{Name: "wrong_shift", Description: "Shift amount is 7 instead of 8 in bit shifting"}
+	bugOffByOne    = bugDef{Name: "off_by_one", Description: "Uses % 255 instead of % 256 in modulo operation"}
+	bugWrongOp     = bugDef{Name: "wrong_operator", Description: "Uses + (addition) instead of ^ (XOR) as the accumulator operator"}
+	bugMissingStep = bugDef{Name: "missing_step", Description: "Missing byte reversal between hash rounds"}
+	bugWrongInit   = bugDef{Name: "wrong_init", Description: "Accumulator initialized to 1 instead of 0"}
+	bugWrongPad    = bugDef{Name: "wrong_pad", Description: "padStart uses length 1 instead of 2 for hex encoding"}
+	bugWrongShift  = bugDef{Name: "wrong_shift", Description: "Shift amount is 7 instead of 8 in bit shifting"}
 )
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ var (
 // ---------------------------------------------------------------------------
 
 type templateInput struct {
-	Data   string                 `json:"data"`   // base64-encoded
+	Data   string                 `json:"data"` // base64-encoded
 	Params map[string]interface{} `json:"params"`
 }
 

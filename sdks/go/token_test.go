@@ -42,7 +42,7 @@ func defaultClaims() map[string]interface{} {
 			"execution":   0.85,
 			"autonomy":    0.8,
 			"speed":       0.75,
-			"consistency":  0.88,
+			"consistency": 0.88,
 		},
 		"model_family":      "gpt-4",
 		"challenge_ids":     []string{"ch-001"},
