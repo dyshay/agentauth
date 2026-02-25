@@ -207,10 +207,12 @@ fn big_small_template(data: &[u8], _difficulty: &Difficulty) -> TemplateResult {
     let phrasings = vec![
         "If the first byte of the data is big, reverse the entire byte array.\n\
          Otherwise, sort all bytes in ascending order.\n\
-         Return the hex-encoded result.".to_string(),
+         Return the hex-encoded result."
+            .to_string(),
         "Examine the first byte. If it is a big value, flip the array end-to-end.\n\
          If it is small, arrange bytes from lowest to highest.\n\
-         Provide the hex-encoded output.".to_string(),
+         Provide the hex-encoded output."
+            .to_string(),
     ];
 
     TemplateResult {
@@ -319,11 +321,7 @@ impl AmbiguousLogicDriver {
         for (i, (_name, func)) in templates.iter().enumerate() {
             let result = func(&current_data, difficulty);
 
-            instruction_parts.push(format!(
-                "--- Part {} ---\n{}",
-                i + 1,
-                result.instructions
-            ));
+            instruction_parts.push(format!("--- Part {} ---\n{}", i + 1, result.instructions));
 
             if i == 0 {
                 all_acceptable = result.acceptable_answers;
@@ -400,10 +398,7 @@ impl ChallengeDriver for AmbiguousLogicDriver {
     }
 
     fn dimensions(&self) -> Vec<ChallengeDimension> {
-        vec![
-            ChallengeDimension::Reasoning,
-            ChallengeDimension::Ambiguity,
-        ]
+        vec![ChallengeDimension::Reasoning, ChallengeDimension::Ambiguity]
     }
 
     fn estimated_human_time_ms(&self) -> u64 {
@@ -473,10 +468,7 @@ mod tests {
         let (_payload, answer_hash) = driver.generate(&Difficulty::Easy).unwrap();
 
         let is_valid = driver
-            .verify(
-                &answer_hash,
-                &serde_json::Value::String("wrong".into()),
-            )
+            .verify(&answer_hash, &serde_json::Value::String("wrong".into()))
             .unwrap();
         assert!(!is_valid);
     }

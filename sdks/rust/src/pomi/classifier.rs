@@ -158,7 +158,10 @@ impl ModelClassifier {
                     None => return 0.5,
                 };
                 let re = Regex::new(r"-?\d+\.?\d*").unwrap();
-                let value = match re.find(response).and_then(|m| m.as_str().parse::<f64>().ok()) {
+                let value = match re
+                    .find(response)
+                    .and_then(|m| m.as_str().parse::<f64>().ok())
+                {
                     Some(v) => v,
                     None => return 0.5,
                 };

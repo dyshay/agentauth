@@ -41,10 +41,13 @@ impl Default for MemoryStore {
 impl ChallengeStore for MemoryStore {
     async fn set(&self, id: &str, data: ChallengeData, ttl_seconds: u64) -> Result<(), String> {
         let expires_at_ms = Self::now_ms() + ttl_seconds * 1000;
-        self.entries
-            .lock()
-            .unwrap()
-            .insert(id.to_string(), Entry { data, expires_at_ms });
+        self.entries.lock().unwrap().insert(
+            id.to_string(),
+            Entry {
+                data,
+                expires_at_ms,
+            },
+        );
         Ok(())
     }
 

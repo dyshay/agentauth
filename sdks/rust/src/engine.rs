@@ -66,22 +66,19 @@ impl AgentAuthEngine {
         let token_verifier = TokenVerifier::new(&config.secret);
 
         // Initialize PoMI if configured
-        let (canary_injector, model_classifier, pomi_config) =
-            if let Some(ref pomi) = config.pomi {
-                if pomi.enabled {
-                    let catalog = CanaryCatalog::new(None);
-                    let injector = CanaryInjector::new(catalog);
-                    let classifier = ModelClassifier::new(
-                        pomi.model_families.clone(),
-                        pomi.confidence_threshold,
-                    );
-                    (Some(injector), Some(classifier), Some(pomi.clone()))
-                } else {
-                    (None, None, None)
-                }
+        let (canary_injector, model_classifier, pomi_config) = if let Some(ref pomi) = config.pomi {
+            if pomi.enabled {
+                let catalog = CanaryCatalog::new(None);
+                let injector = CanaryInjector::new(catalog);
+                let classifier =
+                    ModelClassifier::new(pomi.model_families.clone(), pomi.confidence_threshold);
+                (Some(injector), Some(classifier), Some(pomi.clone()))
             } else {
                 (None, None, None)
-            };
+            }
+        } else {
+            (None, None, None)
+        };
 
         // Initialize timing if configured
         let (timing_analyzer, session_tracker) = if let Some(ref timing) = config.timing {
@@ -356,9 +353,9 @@ impl AgentAuthEngine {
 
         // Classify model identity if PoMI is enabled
         let model_identity = if let Some(ref classifier) = self.model_classifier {
-            data.injected_canaries.as_ref().map(|canaries| {
-                classifier.classify(canaries, &input.canary_responses)
-            })
+            data.injected_canaries
+                .as_ref()
+                .map(|canaries| classifier.classify(canaries, &input.canary_responses))
         } else {
             None
         };
@@ -373,12 +370,7 @@ impl AgentAuthEngine {
                     None
                 }
             })
-            .or_else(|| {
-                input
-                    .metadata
-                    .as_ref()
-                    .and_then(|m| m.model.clone())
-            })
+            .or_else(|| input.metadata.as_ref().and_then(|m| m.model.clone()))
             .unwrap_or_else(|| "unknown".to_string());
 
         // Session tracking
@@ -486,10 +478,7 @@ impl AgentAuthEngine {
         };
         let speed = ((1.0 - penalty) * 0.95 * 1000.0).round() / 1000.0;
         let autonomy = {
-            let base = if matches!(
-                zone,
-                Some(TimingZone::Human) | Some(TimingZone::Suspicious)
-            ) {
+            let base = if matches!(zone, Some(TimingZone::Human) | Some(TimingZone::Suspicious)) {
                 (1.0 - penalty) * 0.9
             } else {
                 0.9
@@ -544,10 +533,7 @@ mod tests {
     use crate::stores::MemoryStore;
     use std::sync::Arc;
 
-    fn make_engine(
-        with_timing: bool,
-        with_pomi: bool,
-    ) -> AgentAuthEngine {
+    fn make_engine(with_timing: bool, with_pomi: bool) -> AgentAuthEngine {
         let store: Arc<dyn ChallengeStore> = Arc::new(MemoryStore::new());
         let config = EngineConfig {
             secret: "test-secret-key-for-agentauth!!".into(),
@@ -580,7 +566,10 @@ mod tests {
         let engine = make_engine(false, false);
 
         // Init
-        let init = engine.init_challenge(Some(Difficulty::Easy), None).await.unwrap();
+        let init = engine
+            .init_challenge(Some(Difficulty::Easy), None)
+            .await
+            .unwrap();
         assert!(init.id.starts_with("ch_"));
         assert!(init.session_token.starts_with("st_"));
 
@@ -604,7 +593,10 @@ mod tests {
         let mut engine = AgentAuthEngine::new(config, store);
         engine.register_driver(Box::new(CryptoNLDriver::new()));
 
-        let init = engine.init_challenge(Some(Difficulty::Easy), None).await.unwrap();
+        let init = engine
+            .init_challenge(Some(Difficulty::Easy), None)
+            .await
+            .unwrap();
 
         // Wait for expiry
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
@@ -627,7 +619,10 @@ mod tests {
     async fn test_wrong_hmac() {
         let engine = make_engine(false, false);
 
-        let init = engine.init_challenge(Some(Difficulty::Easy), None).await.unwrap();
+        let init = engine
+            .init_challenge(Some(Difficulty::Easy), None)
+            .await
+            .unwrap();
 
         let input = SolveInput {
             answer: "test".into(),
@@ -647,7 +642,10 @@ mod tests {
     async fn test_wrong_answer() {
         let engine = make_engine(false, false);
 
-        let init = engine.init_challenge(Some(Difficulty::Easy), None).await.unwrap();
+        let init = engine
+            .init_challenge(Some(Difficulty::Easy), None)
+            .await
+            .unwrap();
 
         let input = SolveInput {
             answer: "wrong_answer".into(),
@@ -666,7 +664,10 @@ mod tests {
     #[tokio::test]
     async fn test_correct_solve_produces_token() {
         let engine = make_engine(false, false);
-        let init = engine.init_challenge(Some(Difficulty::Easy), None).await.unwrap();
+        let init = engine
+            .init_challenge(Some(Difficulty::Easy), None)
+            .await
+            .unwrap();
 
         // Verify token issuance flow is tested via other tests
         // Full solve verified through driver-level tests + wrong_answer test
@@ -681,7 +682,10 @@ mod tests {
     #[tokio::test]
     async fn test_pomi_enabled() {
         let engine = make_engine(false, true);
-        let init = engine.init_challenge(Some(Difficulty::Easy), None).await.unwrap();
+        let init = engine
+            .init_challenge(Some(Difficulty::Easy), None)
+            .await
+            .unwrap();
 
         let challenge = engine
             .get_challenge(&init.id, &init.session_token)

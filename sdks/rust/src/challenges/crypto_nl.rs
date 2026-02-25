@@ -94,16 +94,10 @@ fn phrasing(op: &ByteOperation) -> String {
         OpType::Xor => {
             let key = op.params["key"].as_u64().unwrap_or(0);
             let options = vec![
-                format!(
-                    "XOR each byte with 0x{:02X}",
-                    key
-                ),
+                format!("XOR each byte with 0x{:02X}", key),
                 format!("Apply exclusive-or with the value {} to every byte", key),
                 format!("Bitwise XOR each octet using the key {}", key),
-                format!(
-                    "For every byte, flip bits using 0x{:02x} as mask",
-                    key
-                ),
+                format!("For every byte, flip bits using 0x{:02x} as mask", key),
             ];
             options[rng.gen_range(0..options.len())].clone()
         }
@@ -153,7 +147,8 @@ fn phrasing(op: &ByteOperation) -> String {
         OpType::Sha256 => {
             let options = vec![
                 "Compute the SHA-256 hash of the current data (producing 32 raw bytes)".to_string(),
-                "Hash the byte array with SHA-256, replacing it with the 32-byte digest".to_string(),
+                "Hash the byte array with SHA-256, replacing it with the 32-byte digest"
+                    .to_string(),
                 "Apply SHA-256 to the data \u{2014} the result is the raw 32-byte hash".to_string(),
             ];
             options[rng.gen_range(0..options.len())].clone()
@@ -174,10 +169,7 @@ fn phrasing(op: &ByteOperation) -> String {
                     "Concatenate the array with itself {} times (total {}x copies)",
                     times, times
                 ),
-                format!(
-                    "Repeat the data {} times by appending it to itself",
-                    times
-                ),
+                format!("Repeat the data {} times by appending it to itself", times),
                 format!(
                     "Duplicate the byte sequence so it appears {} times in a row",
                     times
@@ -321,8 +313,7 @@ fn apply_op(data: &[u8], op: &ByteOperation) -> Vec<u8> {
         OpType::Hmac => {
             let key_hex = op.params["keyHex"].as_str().unwrap_or("");
             let key_bytes = hex::decode(key_hex).unwrap_or_default();
-            let mut mac =
-                Hmac::<Sha256>::new_from_slice(&key_bytes).expect("HMAC key");
+            let mut mac = Hmac::<Sha256>::new_from_slice(&key_bytes).expect("HMAC key");
             mac.update(data);
             mac.finalize().into_bytes().to_vec()
         }
@@ -530,16 +521,46 @@ mod tests {
     fn test_nl_phrasings_exist() {
         // Ensure phrasing doesn't panic for each op type
         let ops = vec![
-            ByteOperation { op: OpType::Xor, params: serde_json::json!({"key": 5}) },
-            ByteOperation { op: OpType::Reverse, params: serde_json::json!({}) },
-            ByteOperation { op: OpType::Slice, params: serde_json::json!({"start": 0, "end": 4}) },
-            ByteOperation { op: OpType::Sort, params: serde_json::json!({}) },
-            ByteOperation { op: OpType::Rotate, params: serde_json::json!({"positions": 3}) },
-            ByteOperation { op: OpType::Sha256, params: serde_json::json!({}) },
-            ByteOperation { op: OpType::BitwiseNot, params: serde_json::json!({}) },
-            ByteOperation { op: OpType::Repeat, params: serde_json::json!({"times": 2}) },
-            ByteOperation { op: OpType::Hmac, params: serde_json::json!({"keyHex": "abcd"}) },
-            ByteOperation { op: OpType::Base64Encode, params: serde_json::json!({}) },
+            ByteOperation {
+                op: OpType::Xor,
+                params: serde_json::json!({"key": 5}),
+            },
+            ByteOperation {
+                op: OpType::Reverse,
+                params: serde_json::json!({}),
+            },
+            ByteOperation {
+                op: OpType::Slice,
+                params: serde_json::json!({"start": 0, "end": 4}),
+            },
+            ByteOperation {
+                op: OpType::Sort,
+                params: serde_json::json!({}),
+            },
+            ByteOperation {
+                op: OpType::Rotate,
+                params: serde_json::json!({"positions": 3}),
+            },
+            ByteOperation {
+                op: OpType::Sha256,
+                params: serde_json::json!({}),
+            },
+            ByteOperation {
+                op: OpType::BitwiseNot,
+                params: serde_json::json!({}),
+            },
+            ByteOperation {
+                op: OpType::Repeat,
+                params: serde_json::json!({"times": 2}),
+            },
+            ByteOperation {
+                op: OpType::Hmac,
+                params: serde_json::json!({"keyHex": "abcd"}),
+            },
+            ByteOperation {
+                op: OpType::Base64Encode,
+                params: serde_json::json!({}),
+            },
         ];
 
         for op in &ops {

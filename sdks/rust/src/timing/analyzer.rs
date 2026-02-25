@@ -24,7 +24,11 @@ struct DefaultThresholds {
 impl TimingAnalyzer {
     pub fn new(config: &TimingConfig) -> Self {
         let mut baselines = HashMap::new();
-        let all = config.baselines.as_ref().map(|b| b.as_slice()).unwrap_or(&[]);
+        let all = config
+            .baselines
+            .as_ref()
+            .map(|b| b.as_slice())
+            .unwrap_or(&[]);
 
         let source = if all.is_empty() {
             default_baselines()
@@ -87,8 +91,7 @@ impl TimingAnalyzer {
         let mut details = self.describe_zone(&zone, elapsed_ms, &adjusted);
 
         // Round-number detection in ai_zone
-        let is_round = elapsed_ms > 0.0
-            && (elapsed_ms % 500.0 == 0.0 || elapsed_ms % 100.0 == 0.0);
+        let is_round = elapsed_ms > 0.0 && (elapsed_ms % 500.0 == 0.0 || elapsed_ms % 100.0 == 0.0);
         if is_round && zone == TimingZone::AiZone {
             confidence = (confidence * 0.85 * 1000.0).round() / 1000.0;
             details += " [round-number timing detected]";

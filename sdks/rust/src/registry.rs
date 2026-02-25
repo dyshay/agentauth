@@ -46,9 +46,7 @@ impl ChallengeRegistry {
             .map(|d| {
                 let score = if let Some(dims) = dimensions {
                     let driver_dims = d.dimensions();
-                    dims.iter()
-                        .filter(|dim| driver_dims.contains(dim))
-                        .count()
+                    dims.iter().filter(|dim| driver_dims.contains(dim)).count()
                 } else {
                     1
                 };
@@ -90,10 +88,7 @@ mod tests {
         fn estimated_ai_time_ms(&self) -> u64 {
             500
         }
-        fn generate(
-            &self,
-            _difficulty: &Difficulty,
-        ) -> Result<(ChallengePayload, String), String> {
+        fn generate(&self, _difficulty: &Difficulty) -> Result<(ChallengePayload, String), String> {
             Ok((
                 ChallengePayload {
                     challenge_type: self.driver_name.clone(),
@@ -159,10 +154,7 @@ mod tests {
         reg.register(mock_driver("d3", vec![ChallengeDimension::Ambiguity]));
 
         let selected = reg.select(
-            Some(&[
-                ChallengeDimension::Reasoning,
-                ChallengeDimension::Execution,
-            ]),
+            Some(&[ChallengeDimension::Reasoning, ChallengeDimension::Execution]),
             2,
         );
         // d2 covers both dimensions, so it should be first

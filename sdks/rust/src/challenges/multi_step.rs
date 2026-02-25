@@ -151,7 +151,8 @@ fn execute_step(
             let ref_def = &previous_results[*step].def;
             let source = &previous_results[step_index - 1].result;
             // Build a temporary result list for re-execution
-            let temp_results: Vec<StepResult> = previous_results[..step_index].to_vec()
+            let temp_results: Vec<StepResult> = previous_results[..step_index]
+                .to_vec()
                 .iter()
                 .map(|r| StepResult {
                     def: r.def.clone(),
@@ -208,10 +209,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
                 &prev_ref
             };
             let options = vec![
-                format!(
-                    "Compute the SHA-256 hash of {}. Your result is",
-                    ref_str
-                ),
+                format!("Compute the SHA-256 hash of {}. Your result is", ref_str),
                 format!("Hash {} using SHA-256. Your result is", ref_str),
                 format!("Apply SHA-256 to {}. Your result is", ref_str),
             ];
@@ -380,7 +378,11 @@ fn generate_all_instructions(steps: &[StepDef], input_data_hex: &str) -> String 
 // Step generation
 // ---------------------------------------------------------------------------
 
-fn generate_compute_step(step_index: usize, data_size: usize, previous_results: &[StepResult]) -> StepDef {
+fn generate_compute_step(
+    step_index: usize,
+    data_size: usize,
+    previous_results: &[StepResult],
+) -> StepDef {
     let mut rng = rand::thread_rng();
 
     let available: Vec<&str> = if step_index == 0 {
@@ -401,9 +403,7 @@ fn generate_compute_step(step_index: usize, data_size: usize, previous_results: 
                 let key = hex::encode(crate::crypto::random_bytes(16));
                 StepDef::Hmac { key }
             } else {
-                StepDef::Hmac {
-                    key: String::new(),
-                }
+                StepDef::Hmac { key: String::new() }
             }
         }
         "slice" => {
@@ -444,7 +444,10 @@ fn generate_memory_apply_step(previous_results: &[StepResult]) -> StepDef {
         .iter()
         .enumerate()
         .filter(|(_, r)| {
-            !matches!(r.def, StepDef::MemoryRecall { .. } | StepDef::MemoryApply { .. })
+            !matches!(
+                r.def,
+                StepDef::MemoryRecall { .. } | StepDef::MemoryApply { .. }
+            )
         })
         .map(|(i, _)| i)
         .collect();
@@ -457,7 +460,10 @@ fn generate_memory_apply_step(previous_results: &[StepResult]) -> StepDef {
     StepDef::MemoryApply { step: target }
 }
 
-fn generate_steps(difficulty: &Difficulty, input_data_hex: &str) -> (Vec<StepDef>, Vec<StepResult>) {
+fn generate_steps(
+    difficulty: &Difficulty,
+    input_data_hex: &str,
+) -> (Vec<StepDef>, Vec<StepResult>) {
     let config = difficulty_config(difficulty);
     let mut steps = Vec::new();
     let mut results = Vec::new();
@@ -612,10 +618,7 @@ mod tests {
         let (_payload, answer_hash) = driver.generate(&Difficulty::Easy).unwrap();
 
         let is_valid = driver
-            .verify(
-                &answer_hash,
-                &serde_json::Value::String("wrong".into()),
-            )
+            .verify(&answer_hash, &serde_json::Value::String("wrong".into()))
             .unwrap();
         assert!(!is_valid);
     }
