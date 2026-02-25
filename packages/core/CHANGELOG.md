@@ -1,5 +1,12 @@
 # @xagentauth/core
 
+## 0.3.0
+
+### Minor Changes
+
+- [#8](https://github.com/dyshay/agentauth/pull/8) [`2cbc1e1`](https://github.com/dyshay/agentauth/commit/2cbc1e1fe62b42812b6e6a4dcfc5a9b169b5a8b7) Thanks [@dyshay](https://github.com/dyshay)! - Add Rust client SDK (agentauth crate) with async client, HMAC-SHA256, WASM bindings via wasm-bindgen.
+  Add Python client SDK (agentauth package) with async httpx client, Pydantic models, LangChain and CrewAI tool integrations.
+
 ## 0.2.0
 
 ### Minor Changes
