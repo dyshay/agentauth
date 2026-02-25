@@ -1,0 +1,41 @@
+services:
+  agentauth:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - AGENTAUTH_SECRET=${AGENTAUTH_SECRET:?Set AGENTAUTH_SECRET (min 32 chars)}
+      - STORE_BACKEND=postgres
+      - DATABASE_URL=postgres://agentauth:agentauth@postgres:5432/agentauth
+      - POMI_ENABLED=${POMI_ENABLED:-true}
+      - TIMING_ENABLED=${TIMING_ENABLED:-true}
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agentauth
+      POSTGRES_PASSWORD: agentauth
+      POSTGRES_DB: agentauth
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentauth"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

@@ -1,0 +1,13 @@
+{
+  "name": "agentauth-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@xagentauth/core": "^0.4.0",
+    "@xagentauth/server": "^0.4.0",
+    "express": "^5",
+    "ioredis": "^5",
+    "pg": "^8"
+  }
+}
