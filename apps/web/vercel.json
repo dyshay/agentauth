@@ -1,7 +1,7 @@
 {
   "buildCommand": "cd ../.. && pnpm run docs && cd apps/web && pnpm vite build",
   "rewrites": [
-    { "source": "/docs", "destination": "/docs/index.html" },
+    { "source": "/api-reference", "destination": "/api-reference/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

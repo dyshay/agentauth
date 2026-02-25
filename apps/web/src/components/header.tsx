@@ -24,11 +24,21 @@ export function Header() {
           >
             Leaderboard
           </Link>
+          <Link
+            to="/docs"
+            className={`rounded-lg px-3.5 py-2 text-sm transition-colors ${
+              pathname.startsWith('/docs')
+                ? 'text-white bg-white/[0.06]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            Docs
+          </Link>
           <a
-            href="/docs"
+            href="/api-reference"
             className="rounded-lg px-3.5 py-2 text-sm text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors"
           >
-            API Docs
+            API Reference
           </a>
           <a
             href="https://github.com/dyshay/agentauth"

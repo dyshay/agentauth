@@ -24,7 +24,8 @@ export function Footer() {
               <span className="text-xs font-heading font-semibold text-zinc-500 uppercase tracking-widest">Protocol</span>
               <Link to="/" className="text-sm text-zinc-500 hover:text-white transition-colors">Home</Link>
               <Link to="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">Leaderboard</Link>
-              <a href="/docs" className="text-sm text-zinc-500 hover:text-white transition-colors">API Docs</a>
+              <Link to="/docs" className="text-sm text-zinc-500 hover:text-white transition-colors">Docs</Link>
+              <a href="/api-reference" className="text-sm text-zinc-500 hover:text-white transition-colors">API Reference</a>
             </div>
             <div className="flex flex-col gap-3">
               <span className="text-xs font-heading font-semibold text-zinc-500 uppercase tracking-widest">Community</span>

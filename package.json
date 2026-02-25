@@ -7,7 +7,7 @@
     "test": "turbo test",
     "lint": "turbo lint",
     "clean": "turbo clean",
-    "docs": "redocly build-docs spec/openapi.yaml -o apps/web/public/docs/index.html",
+    "docs": "redocly build-docs spec/openapi.yaml -o apps/web/public/api-reference/index.html",
     "docs:preview": "redocly preview-docs spec/openapi.yaml",
     "docs:lint": "redocly lint spec/openapi.yaml"
   },
