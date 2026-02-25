@@ -4,16 +4,12 @@ from xagentauth.types import AgentCapabilityScore
 
 class TestFormatCapabilities:
     def test_formats_all_dimensions(self) -> None:
-        score = AgentCapabilityScore(
-            reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88
-        )
+        score = AgentCapabilityScore(reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88)
         result = format_capabilities(score)
         assert result == "reasoning=0.9,execution=0.85,autonomy=0.8,speed=0.75,consistency=0.88"
 
     def test_roundtrip(self) -> None:
-        score = AgentCapabilityScore(
-            reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88
-        )
+        score = AgentCapabilityScore(reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88)
         formatted = format_capabilities(score)
         parsed = parse_capabilities(formatted)
         assert parsed["reasoning"] == 0.9
