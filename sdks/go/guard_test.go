@@ -1,6 +1,7 @@
 package xagentauth
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -28,8 +29,15 @@ func TestVerifyRequestSufficientScore(t *testing.T) {
 	if result.Claims.Sub != "agent-123" {
 		t.Errorf("expected sub=agent-123, got %s", result.Claims.Sub)
 	}
-	if result.Headers["AgentAuth-Status"] != "verified" {
+	if result.Headers[HeaderStatus] != "verified" {
 		t.Errorf("expected verified status header")
+	}
+	capsHeader, ok := result.Headers[HeaderCapabilities]
+	if !ok {
+		t.Error("expected AgentAuth-Capabilities header")
+	}
+	if !strings.Contains(capsHeader, "reasoning=") {
+		t.Errorf("expected capabilities to contain reasoning=, got %s", capsHeader)
 	}
 }
 

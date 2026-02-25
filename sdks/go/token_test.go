@@ -137,3 +137,88 @@ func TestDecodeWithoutVerification(t *testing.T) {
 	}
 	_ = fmt.Sprintf("decoded: %+v", claims)
 }
+
+func TestSignProducesVerifiableToken(t *testing.T) {
+	v := NewTokenVerifier(testSecret)
+	input := &TokenSignInput{
+		Sub: "agent-456",
+		Capabilities: AgentCapabilityScore{
+			Reasoning: 0.9, Execution: 0.85, Autonomy: 0.8, Speed: 0.75, Consistency: 0.88,
+		},
+		ModelFamily:  "gpt-4",
+		ChallengeIDs: []string{"ch-001"},
+	}
+
+	token, err := v.Sign(input, 3600)
+	if err != nil {
+		t.Fatalf("unexpected sign error: %v", err)
+	}
+
+	claims, err := v.Verify(token)
+	if err != nil {
+		t.Fatalf("unexpected verify error: %v", err)
+	}
+	if claims.Sub != "agent-456" {
+		t.Errorf("expected sub=agent-456, got %s", claims.Sub)
+	}
+	if claims.ModelFamily != "gpt-4" {
+		t.Errorf("expected model_family=gpt-4, got %s", claims.ModelFamily)
+	}
+	if claims.Iss != "agentauth" {
+		t.Errorf("expected iss=agentauth, got %s", claims.Iss)
+	}
+	if claims.AgentAuthVersion != "1" {
+		t.Errorf("expected version=1, got %s", claims.AgentAuthVersion)
+	}
+	if claims.Capabilities.Reasoning != 0.9 {
+		t.Errorf("expected reasoning=0.9, got %f", claims.Capabilities.Reasoning)
+	}
+}
+
+func TestSignWithCustomTTL(t *testing.T) {
+	v := NewTokenVerifier(testSecret)
+	input := &TokenSignInput{
+		Sub: "agent-456",
+		Capabilities: AgentCapabilityScore{
+			Reasoning: 0.9, Execution: 0.85, Autonomy: 0.8, Speed: 0.75, Consistency: 0.88,
+		},
+		ModelFamily:  "gpt-4",
+		ChallengeIDs: []string{"ch-001"},
+	}
+
+	token, err := v.Sign(input, 120)
+	if err != nil {
+		t.Fatalf("unexpected sign error: %v", err)
+	}
+
+	claims, err := v.Decode(token)
+	if err != nil {
+		t.Fatalf("unexpected decode error: %v", err)
+	}
+	if claims.Exp-claims.Iat != 120 {
+		t.Errorf("expected TTL=120, got %d", claims.Exp-claims.Iat)
+	}
+}
+
+func TestSignGeneratesUniqueJTI(t *testing.T) {
+	v := NewTokenVerifier(testSecret)
+	input := &TokenSignInput{
+		Sub: "agent-456",
+		Capabilities: AgentCapabilityScore{
+			Reasoning: 0.9, Execution: 0.85, Autonomy: 0.8, Speed: 0.75, Consistency: 0.88,
+		},
+		ModelFamily:  "gpt-4",
+		ChallengeIDs: []string{"ch-001"},
+	}
+
+	token1, _ := v.Sign(input, 3600)
+	time.Sleep(time.Millisecond)
+	token2, _ := v.Sign(input, 3600)
+
+	claims1, _ := v.Decode(token1)
+	claims2, _ := v.Decode(token2)
+
+	if claims1.Jti == claims2.Jti {
+		t.Errorf("expected unique JTIs, both got %s", claims1.Jti)
+	}
+}
