@@ -19,6 +19,7 @@ from xagentauth.types import ChallengePayload, Difficulty
 # Utility helpers
 # ---------------------------------------------------------------------------
 
+
 def _pick_random(arr: list[Any]) -> Any:
     return arr[math.floor(random.random() * len(arr))]
 
@@ -31,6 +32,7 @@ def _random_int(min_val: int, max_val: int) -> int:
 # Bug definitions
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BugDef:
     name: str
@@ -38,7 +40,9 @@ class BugDef:
 
 
 BUG_OFF_BY_ONE = BugDef(name="off_by_one", description="Uses % 255 instead of % 256 in modulo operation")
-BUG_WRONG_OPERATOR = BugDef(name="wrong_operator", description="Uses + (addition) instead of ^ (XOR) as the accumulator operator")
+BUG_WRONG_OPERATOR = BugDef(
+    name="wrong_operator", description="Uses + (addition) instead of ^ (XOR) as the accumulator operator"
+)
 BUG_MISSING_STEP = BugDef(name="missing_step", description="Missing byte reversal between hash rounds")
 BUG_WRONG_INIT = BugDef(name="wrong_init", description="Accumulator initialized to 1 instead of 0")
 BUG_WRONG_PAD = BugDef(name="wrong_pad", description="padStart uses length 1 instead of 2 for hex encoding")
@@ -48,6 +52,7 @@ BUG_WRONG_SHIFT = BugDef(name="wrong_shift", description="Shift amount is 7 inst
 # ---------------------------------------------------------------------------
 # Code templates
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TemplateInput:
@@ -84,6 +89,7 @@ class CodeTemplate:
 # Template 1: Byte Transform
 # ---------------------------------------------------------------------------
 
+
 def _byte_transform_gen_input() -> TemplateInput:
     size = _random_int(8, 16)
     data = random_bytes(size)
@@ -96,17 +102,19 @@ def _byte_transform_buggy_code(input: TemplateInput, active_bugs: list[BugDef]) 
     mod = "255" if has_off_by_one else "256"
     multiplier = "((i + 1) << 7)" if has_wrong_shift else "(i + 1)"
 
-    return "\n".join([
-        "function transform(data) {",
-        "  // data is a Uint8Array",
-        "  const result = [];",
-        "  for (let i = 0; i < data.length; i++) {",
-        f"    result.push((data[i] * {multiplier}) % {mod});",
-        "  }",
-        "  // Return the SHA-256 hex digest of the resulting byte array",
-        "  return sha256hex(Uint8Array.from(result));",
-        "}",
-    ])
+    return "\n".join(
+        [
+            "function transform(data) {",
+            "  // data is a Uint8Array",
+            "  const result = [];",
+            "  for (let i = 0; i < data.length; i++) {",
+            f"    result.push((data[i] * {multiplier}) % {mod});",
+            "  }",
+            "  // Return the SHA-256 hex digest of the resulting byte array",
+            "  return sha256hex(Uint8Array.from(result));",
+            "}",
+        ]
+    )
 
 
 async def _byte_transform_correct_output(input: TemplateInput) -> str:
@@ -130,6 +138,7 @@ BYTE_TRANSFORM_TEMPLATE = CodeTemplate(
 # Template 2: Array Processing (accumulator)
 # ---------------------------------------------------------------------------
 
+
 def _array_processing_gen_input() -> TemplateInput:
     size = _random_int(8, 24)
     data = random_bytes(size)
@@ -144,16 +153,18 @@ def _array_processing_buggy_code(input: TemplateInput, active_bugs: list[BugDef]
     init_val = "1" if has_wrong_init else "0"
     pad_len = "1" if has_wrong_pad else "2"
 
-    return "\n".join([
-        "function process(data) {",
-        "  // data is a Uint8Array",
-        f"  let acc = {init_val};",
-        "  for (const byte of data) {",
-        f"    acc = (acc {operator} byte) & 0xFF;",
-        "  }",
-        f"  return acc.toString(16).padStart({pad_len}, '0');",
-        "}",
-    ])
+    return "\n".join(
+        [
+            "function process(data) {",
+            "  // data is a Uint8Array",
+            f"  let acc = {init_val};",
+            "  for (const byte of data) {",
+            f"    acc = (acc {operator} byte) & 0xFF;",
+            "  }",
+            f"  return acc.toString(16).padStart({pad_len}, '0');",
+            "}",
+        ]
+    )
 
 
 async def _array_processing_correct_output(input: TemplateInput) -> str:
@@ -177,6 +188,7 @@ ARRAY_PROCESSING_TEMPLATE = CodeTemplate(
 # Template 3: Hash Chain
 # ---------------------------------------------------------------------------
 
+
 def _hash_chain_gen_input() -> TemplateInput:
     size = _random_int(8, 16)
     data = random_bytes(size)
@@ -189,23 +201,21 @@ def _hash_chain_buggy_code(input: TemplateInput, active_bugs: list[BugDef]) -> s
     has_missing_step = any(b.name == "missing_step" for b in active_bugs)
     has_off_by_one = any(b.name == "off_by_one" for b in active_bugs)
     loop_end = f"{rounds} - 1" if has_off_by_one else str(rounds)
-    reverse_comment = (
-        "      // (no reversal step)"
-        if has_missing_step
-        else "      current = current.reverse();"
-    )
+    reverse_comment = "      // (no reversal step)" if has_missing_step else "      current = current.reverse();"
 
-    return "\n".join([
-        "function hashChain(data, rounds) {",
-        f"  // data is a Uint8Array, rounds = {rounds}",
-        "  let current = data;",
-        f"  for (let i = 0; i < {loop_end}; i++) {{",
-        "    current = sha256(current); // returns Uint8Array",
-        reverse_comment,
-        "  }",
-        "  return hex(current); // returns hex string",
-        "}",
-    ])
+    return "\n".join(
+        [
+            "function hashChain(data, rounds) {",
+            f"  // data is a Uint8Array, rounds = {rounds}",
+            "  let current = data;",
+            f"  for (let i = 0; i < {loop_end}; i++) {{",
+            "    current = sha256(current); // returns Uint8Array",
+            reverse_comment,
+            "  }",
+            "  return hex(current); // returns hex string",
+            "}",
+        ]
+    )
 
 
 async def _hash_chain_correct_output(input: TemplateInput) -> str:
@@ -243,6 +253,7 @@ ALL_TEMPLATES: list[CodeTemplate] = [
 # Difficulty configuration
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DifficultyConfig:
     bug_count: int
@@ -252,15 +263,22 @@ class DifficultyConfig:
 
 DIFFICULTY_CONFIG: dict[str, DifficultyConfig] = {
     "easy": DifficultyConfig(bug_count=1, template_names=["byte_transform", "array_processing"], edge_case_hint=False),
-    "medium": DifficultyConfig(bug_count=1, template_names=["byte_transform", "array_processing", "hash_chain"], edge_case_hint=False),
-    "hard": DifficultyConfig(bug_count=2, template_names=["byte_transform", "array_processing", "hash_chain"], edge_case_hint=False),
-    "adversarial": DifficultyConfig(bug_count=3, template_names=["byte_transform", "array_processing", "hash_chain"], edge_case_hint=True),
+    "medium": DifficultyConfig(
+        bug_count=1, template_names=["byte_transform", "array_processing", "hash_chain"], edge_case_hint=False
+    ),
+    "hard": DifficultyConfig(
+        bug_count=2, template_names=["byte_transform", "array_processing", "hash_chain"], edge_case_hint=False
+    ),
+    "adversarial": DifficultyConfig(
+        bug_count=3, template_names=["byte_transform", "array_processing", "hash_chain"], edge_case_hint=True
+    ),
 }
 
 
 # ---------------------------------------------------------------------------
 # Bug selection logic
 # ---------------------------------------------------------------------------
+
 
 def _select_bugs(template: CodeTemplate, count: int) -> list[BugDef]:
     available = list(template.available_bugs)
@@ -276,6 +294,7 @@ def _select_bugs(template: CodeTemplate, count: int) -> list[BugDef]:
 # ---------------------------------------------------------------------------
 # CodeExecutionDriver
 # ---------------------------------------------------------------------------
+
 
 class CodeExecutionDriver:
     name = "code-execution"
@@ -318,29 +337,31 @@ class CodeExecutionDriver:
             else ""
         )
 
-        instructions = "\n".join([
-            "The following JavaScript function contains bug(s). Your task is to:",
-            "1. Identify and fix all bugs in the code",
-            "2. Mentally execute the fixed code with the provided input",
-            "3. Return the correct output",
-            "",
-            "## Code",
-            "```javascript",
-            buggy_code,
-            "```",
-            "",
-            "## Input",
-            f"Data (hex): {input_hex}",
-            *param_lines,
-            "",
-            "## Notes",
-            "- sha256hex() / sha256() compute SHA-256 and return hex string / Uint8Array respectively",
-            "- hex() converts a Uint8Array to a hex string",
-            "- All arithmetic on bytes should stay within 0-255 range",
-            edge_case_note,
-            "",
-            "Return the exact output of the fixed function.",
-        ])
+        instructions = "\n".join(
+            [
+                "The following JavaScript function contains bug(s). Your task is to:",
+                "1. Identify and fix all bugs in the code",
+                "2. Mentally execute the fixed code with the provided input",
+                "3. Return the correct output",
+                "",
+                "## Code",
+                "```javascript",
+                buggy_code,
+                "```",
+                "",
+                "## Input",
+                f"Data (hex): {input_hex}",
+                *param_lines,
+                "",
+                "## Notes",
+                "- sha256hex() / sha256() compute SHA-256 and return hex string / Uint8Array respectively",
+                "- hex() converts a Uint8Array to a hex string",
+                "- All arithmetic on bytes should stay within 0-255 range",
+                edge_case_note,
+                "",
+                "Return the exact output of the fixed function.",
+            ]
+        )
 
         return ChallengePayload(
             type="code-execution",

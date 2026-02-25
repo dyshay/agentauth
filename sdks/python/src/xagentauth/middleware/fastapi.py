@@ -66,7 +66,9 @@ def create_challenge_router(config: AgentAuthConfig) -> APIRouter:
     @router.post("/challenge")
     async def init_challenge(request: Request) -> Any:
         try:
-            body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+            body = (
+                await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+            )
         except Exception:
             body = {}
         options = InitChallengeOptions(

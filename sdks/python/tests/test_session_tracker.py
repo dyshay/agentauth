@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 
-
 from xagentauth.timing.session_tracker import SessionTimingTracker
 
 

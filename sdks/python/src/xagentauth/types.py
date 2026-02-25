@@ -10,6 +10,7 @@ from pydantic import BaseModel
 # Core enums
 # ---------------------------------------------------------------------------
 
+
 class Difficulty(str, Enum):
     EASY = "easy"
     MEDIUM = "medium"
@@ -27,6 +28,7 @@ class ChallengeDimension(str, Enum):
 # ---------------------------------------------------------------------------
 # Challenge types
 # ---------------------------------------------------------------------------
+
 
 class ChallengePayload(BaseModel):
     type: str
@@ -193,6 +195,7 @@ class TimingConfig(BaseModel):
 # Challenge data & store
 # ---------------------------------------------------------------------------
 
+
 class Challenge(BaseModel):
     id: str
     session_token: str
@@ -235,6 +238,7 @@ class ChallengeDriver(Protocol):
 # ---------------------------------------------------------------------------
 # Engine types
 # ---------------------------------------------------------------------------
+
 
 class AgentAuthConfig(BaseModel):
     secret: str
@@ -292,6 +296,7 @@ class VerifyTokenResult(BaseModel):
 # ---------------------------------------------------------------------------
 # Client-side response types (kept for backward compat)
 # ---------------------------------------------------------------------------
+
 
 class InitChallengeResponse(BaseModel):
     id: str

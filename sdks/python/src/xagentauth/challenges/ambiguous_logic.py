@@ -20,6 +20,7 @@ from xagentauth.types import ChallengePayload, Difficulty
 # Types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AcceptableAnswer:
     answer: str  # hex-encoded result
@@ -35,6 +36,7 @@ class ScoredAnswerHash:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _pick_random(arr: list[Any]) -> Any:
     return arr[math.floor(random.random() * len(arr))]
@@ -56,18 +58,18 @@ def _reverse_bytes(data: bytes) -> bytes:
 # Templates
 # ---------------------------------------------------------------------------
 
+
 class AmbiguousTemplate:
     def __init__(self, name: str, generate_fn: Any) -> None:
         self.name = name
         self._generate_fn = generate_fn
 
-    def generate(
-        self, data: bytes, difficulty: str
-    ) -> tuple[str, list[AcceptableAnswer]]:
+    def generate(self, data: bytes, difficulty: str) -> tuple[str, list[AcceptableAnswer]]:
         return self._generate_fn(data, difficulty)
 
 
 # --- lucky-number ---
+
 
 def _lucky_number_generate(data: bytes, difficulty: str) -> tuple[str, list[AcceptableAnswer]]:
     byte_count = len(data)
@@ -110,6 +112,7 @@ LUCKY_NUMBER_TEMPLATE = AmbiguousTemplate(name="lucky-number", generate_fn=_luck
 
 # --- famous-constant ---
 
+
 def _famous_constant_generate(data: bytes, difficulty: str) -> tuple[str, list[AcceptableAnswer]]:
     # Primary: pi -> "3.1" -> 31
     pi_result = _xor_bytes(data, 31)
@@ -139,6 +142,7 @@ FAMOUS_CONSTANT_TEMPLATE = AmbiguousTemplate(name="famous-constant", generate_fn
 
 
 # --- big-small ---
+
 
 def _big_small_generate(data: bytes, difficulty: str) -> tuple[str, list[AcceptableAnswer]]:
     first_byte = data[0]
@@ -201,6 +205,7 @@ DIFFICULTY_CONFIG: dict[str, dict[str, int]] = {
 # Driver
 # ---------------------------------------------------------------------------
 
+
 class AmbiguousLogicDriver:
     name = "ambiguous-logic"
     dimensions = ("reasoning", "ambiguity")
@@ -260,10 +265,7 @@ class AmbiguousLogicDriver:
             context={
                 "templateName": template.name,
                 "primaryAnswer": acceptable_answers[0].answer,
-                "scoredAnswers": [
-                    {"answerHash": s.answer_hash, "score": s.score}
-                    for s in scored_answers
-                ],
+                "scoredAnswers": [{"answerHash": s.answer_hash, "score": s.score} for s in scored_answers],
             },
         )
 
@@ -307,8 +309,7 @@ class AmbiguousLogicDriver:
                 unique_map[ans.answer] = ans.score
 
         deduplicated = [
-            AcceptableAnswer(answer=a, score=s)
-            for a, s in sorted(unique_map.items(), key=lambda x: x[1], reverse=True)
+            AcceptableAnswer(answer=a, score=s) for a, s in sorted(unique_map.items(), key=lambda x: x[1], reverse=True)
         ]
 
         scored_answers = await self._hash_answers(deduplicated)
@@ -327,10 +328,7 @@ class AmbiguousLogicDriver:
             context={
                 "templateNames": [t.name for t in templates],
                 "primaryAnswer": deduplicated[0].answer,
-                "scoredAnswers": [
-                    {"answerHash": s.answer_hash, "score": s.score}
-                    for s in scored_answers
-                ],
+                "scoredAnswers": [{"answerHash": s.answer_hash, "score": s.score} for s in scored_answers],
             },
         )
 

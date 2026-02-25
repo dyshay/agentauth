@@ -35,11 +35,17 @@ class CanaryExtractor:
 
     def _evaluate(self, canary: Canary, observed: str) -> CanaryEvidence:
         analysis = canary.analysis
-        if isinstance(analysis, CanaryAnalysisExactMatch) or (isinstance(analysis, dict) and analysis.get("type") == "exact_match"):
+        if isinstance(analysis, CanaryAnalysisExactMatch) or (
+            isinstance(analysis, dict) and analysis.get("type") == "exact_match"
+        ):
             return self._evaluate_exact_match(canary, analysis, observed)
-        elif isinstance(analysis, CanaryAnalysisPattern) or (isinstance(analysis, dict) and analysis.get("type") == "pattern"):
+        elif isinstance(analysis, CanaryAnalysisPattern) or (
+            isinstance(analysis, dict) and analysis.get("type") == "pattern"
+        ):
             return self._evaluate_pattern(canary, analysis, observed)
-        elif isinstance(analysis, CanaryAnalysisStatistical) or (isinstance(analysis, dict) and analysis.get("type") == "statistical"):
+        elif isinstance(analysis, CanaryAnalysisStatistical) or (
+            isinstance(analysis, dict) and analysis.get("type") == "statistical"
+        ):
             return self._evaluate_statistical(canary, analysis, observed)
         else:
             raise ValueError(f"Unknown analysis type: {analysis}")

@@ -84,10 +84,7 @@ class SessionTimingTracker:
                 anomalies.append(
                     SessionTimingAnomaly(
                         type="rapid_succession",
-                        description=(
-                            f"Challenges {i - 1} and {i} completed {gap:.0f}ms apart "
-                            f"(< 5000ms threshold)"
-                        ),
+                        description=(f"Challenges {i - 1} and {i} completed {gap:.0f}ms apart (< 5000ms threshold)"),
                         severity="high" if gap < 2000 else "low",
                     )
                 )

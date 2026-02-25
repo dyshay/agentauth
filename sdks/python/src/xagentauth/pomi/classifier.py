@@ -33,20 +33,14 @@ class ModelClassifier:
         canary_responses: Optional[dict[str, str]],
     ) -> ModelIdentification:
         if not canary_responses or len(canaries) == 0:
-            return ModelIdentification(
-                family="unknown", confidence=0, evidence=[], alternatives=[]
-            )
+            return ModelIdentification(family="unknown", confidence=0, evidence=[], alternatives=[])
 
         evidence = self._extractor.extract(canaries, canary_responses)
         if len(evidence) == 0:
-            return ModelIdentification(
-                family="unknown", confidence=0, evidence=[], alternatives=[]
-            )
+            return ModelIdentification(family="unknown", confidence=0, evidence=[], alternatives=[])
 
         # Initialize uniform prior
-        posteriors: dict[str, float] = {
-            family: 1 / len(self._model_families) for family in self._model_families
-        }
+        posteriors: dict[str, float] = {family: 1 / len(self._model_families) for family in self._model_families}
 
         # Bayesian update for each canary with a response
         for canary in canaries:

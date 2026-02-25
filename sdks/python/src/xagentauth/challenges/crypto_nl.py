@@ -124,6 +124,7 @@ DIFFICULTY_CONFIG: dict[str, dict[str, int]] = {
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _pick_random(arr: list[Any]) -> Any:
     return arr[math.floor(random.random() * len(arr))]
 
@@ -135,6 +136,7 @@ def _random_int(min_val: int, max_val: int) -> int:
 # ---------------------------------------------------------------------------
 # Op generation
 # ---------------------------------------------------------------------------
+
 
 def _generate_ops(count: int, data_size: int, difficulty: str) -> list[ByteOperation]:
     op_pool = OPS_BY_DIFFICULTY[difficulty]
@@ -175,6 +177,7 @@ def _generate_ops(count: int, data_size: int, difficulty: str) -> list[ByteOpera
 # Async operation execution
 # ---------------------------------------------------------------------------
 
+
 async def _apply_op(data: bytes, op: ByteOperation) -> bytes:
     if op.op == "xor":
         key = int(op.params["key"])
@@ -182,7 +185,7 @@ async def _apply_op(data: bytes, op: ByteOperation) -> bytes:
     elif op.op == "reverse":
         return data[::-1]
     elif op.op == "slice":
-        return data[int(op.params["start"]):int(op.params["end"])]
+        return data[int(op.params["start"]) : int(op.params["end"])]
     elif op.op == "sort":
         return bytes(sorted(data))
     elif op.op == "rotate":
@@ -210,6 +213,7 @@ async def _apply_op(data: bytes, op: ByteOperation) -> bytes:
 # Instruction generation
 # ---------------------------------------------------------------------------
 
+
 def _ops_to_instructions(ops: list[ByteOperation]) -> str:
     lines: list[str] = []
     for i, op in enumerate(ops):
@@ -223,6 +227,7 @@ def _ops_to_instructions(ops: list[ByteOperation]) -> str:
 # Pipeline execution (async)
 # ---------------------------------------------------------------------------
 
+
 async def _execute_ops(data: bytes, ops: list[ByteOperation]) -> bytes:
     result = data
     for op in ops:
@@ -233,6 +238,7 @@ async def _execute_ops(data: bytes, ops: list[ByteOperation]) -> bytes:
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
+
 
 class CryptoNLDriver:
     name = "crypto-nl"

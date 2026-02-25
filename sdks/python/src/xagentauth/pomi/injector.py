@@ -51,8 +51,7 @@ class CanaryInjector:
         if prefix_canaries:
             prefix_text = "\n".join(f"- {c.id}: {c.prompt}" for c in prefix_canaries)
             instructions = (
-                f"Before starting, answer these briefly (include in canary_responses):\n"
-                f"{prefix_text}\n\n{instructions}"
+                f"Before starting, answer these briefly (include in canary_responses):\n{prefix_text}\n\n{instructions}"
             )
 
         # Inline & Suffix & Embedded: add as "Side tasks" after main instructions

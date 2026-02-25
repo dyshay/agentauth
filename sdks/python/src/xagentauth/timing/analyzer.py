@@ -26,11 +26,15 @@ class TimingAnalyzer:
             self._baselines[key] = b
 
         self._defaults = {
-            "too_fast": (config.default_too_fast_ms if config and config.default_too_fast_ms is not None else None) or 50,
-            "ai_lower": (config.default_ai_lower_ms if config and config.default_ai_lower_ms is not None else None) or 50,
-            "ai_upper": (config.default_ai_upper_ms if config and config.default_ai_upper_ms is not None else None) or 2000,
+            "too_fast": (config.default_too_fast_ms if config and config.default_too_fast_ms is not None else None)
+            or 50,
+            "ai_lower": (config.default_ai_lower_ms if config and config.default_ai_lower_ms is not None else None)
+            or 50,
+            "ai_upper": (config.default_ai_upper_ms if config and config.default_ai_upper_ms is not None else None)
+            or 2000,
             "human": (config.default_human_ms if config and config.default_human_ms is not None else None) or 10000,
-            "timeout": (config.default_timeout_ms if config and config.default_timeout_ms is not None else None) or 30000,
+            "timeout": (config.default_timeout_ms if config and config.default_timeout_ms is not None else None)
+            or 30000,
         }
 
     def analyze(
@@ -92,19 +96,13 @@ class TimingAnalyzer:
             )
 
         mean = sum(step_timings) / len(step_timings)
-        std = math.sqrt(
-            sum((t - mean) ** 2 for t in step_timings) / len(step_timings)
-        )
+        std = math.sqrt(sum((t - mean) ** 2 for t in step_timings) / len(step_timings))
         variance_coefficient = std / mean if mean > 0 else 0
 
         trend = self._detect_trend(step_timings)
 
         # Round number detection: multiples of 100ms or 500ms
-        round_count = sum(
-            1
-            for t in step_timings
-            if t % 500 == 0 or (t % 100 == 0 and t % 500 != 0)
-        )
+        round_count = sum(1 for t in step_timings if t % 500 == 0 or (t % 100 == 0 and t % 500 != 0))
         round_number_ratio = round_count / len(step_timings)
 
         # Verdict
@@ -199,7 +197,9 @@ class TimingAnalyzer:
         if zone == "too_fast":
             return f"Response time {ms}ms is below {baseline.too_fast_ms}ms threshold \u2014 likely pre-computed or scripted"
         elif zone == "ai_zone":
-            return f"Response time {ms}ms is within expected AI range [{baseline.ai_lower_ms}ms, {baseline.ai_upper_ms}ms]"
+            return (
+                f"Response time {ms}ms is within expected AI range [{baseline.ai_lower_ms}ms, {baseline.ai_upper_ms}ms]"
+            )
         elif zone == "suspicious":
             return f"Response time {ms}ms exceeds AI range \u2014 possible human assistance"
         elif zone == "human":

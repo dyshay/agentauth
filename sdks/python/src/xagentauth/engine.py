@@ -82,9 +82,7 @@ class AgentAuthEngine:
     def register_driver(self, driver: Any) -> None:
         self._registry.register(driver)
 
-    async def init_challenge(
-        self, options: Optional[InitChallengeOptions] = None
-    ) -> InitChallengeResult:
+    async def init_challenge(self, options: Optional[InitChallengeOptions] = None) -> InitChallengeResult:
         opts = options or InitChallengeOptions()
         difficulty = opts.difficulty or Difficulty.MEDIUM
         diff_str = difficulty.value if isinstance(difficulty, Difficulty) else difficulty
@@ -153,16 +151,16 @@ class AgentAuthEngine:
         return {
             "id": data.challenge.id,
             "payload": payload_dict,
-            "difficulty": data.challenge.difficulty.value if isinstance(data.challenge.difficulty, Difficulty) else data.challenge.difficulty,
+            "difficulty": data.challenge.difficulty.value
+            if isinstance(data.challenge.difficulty, Difficulty)
+            else data.challenge.difficulty,
             "dimensions": data.challenge.dimensions,
             "created_at": data.challenge.created_at,
             "expires_at": data.challenge.expires_at,
         }
 
     async def solve_challenge(self, id: str, input: SolveInput) -> VerifyResult:
-        zero_score = AgentCapabilityScore(
-            reasoning=0, execution=0, autonomy=0, speed=0, consistency=0
-        )
+        zero_score = AgentCapabilityScore(reasoning=0, execution=0, autonomy=0, speed=0, consistency=0)
 
         data = await self._store.get(id)
         if not data:
@@ -201,7 +199,11 @@ class AgentAuthEngine:
                 rtt_ms = min(input.client_rtt_ms, base_elapsed * 0.5)
             elapsed_ms = base_elapsed - rtt_ms
 
-            diff_str = data.challenge.difficulty.value if isinstance(data.challenge.difficulty, Difficulty) else data.challenge.difficulty
+            diff_str = (
+                data.challenge.difficulty.value
+                if isinstance(data.challenge.difficulty, Difficulty)
+                else data.challenge.difficulty
+            )
             timing_analysis = self._timing_analyzer.analyze(
                 elapsed_ms=elapsed_ms,
                 challenge_type=data.challenge.payload.type,
@@ -211,12 +213,16 @@ class AgentAuthEngine:
 
             if timing_analysis.zone == "too_fast":
                 return VerifyResult(
-                    success=False, score=zero_score, reason="too_fast",
+                    success=False,
+                    score=zero_score,
+                    reason="too_fast",
                     timing_analysis=timing_analysis,
                 )
             if timing_analysis.zone == "timeout":
                 return VerifyResult(
-                    success=False, score=zero_score, reason="timeout",
+                    success=False,
+                    score=zero_score,
+                    reason="timeout",
                     timing_analysis=timing_analysis,
                 )
 

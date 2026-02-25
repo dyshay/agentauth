@@ -36,6 +36,7 @@ class StepResult:
 # Utility helpers
 # ---------------------------------------------------------------------------
 
+
 def _pick_random(arr: list[Any]) -> Any:
     return arr[math.floor(random.random() * len(arr))]
 
@@ -63,6 +64,7 @@ def _slice_hex(hex_str: str, start: int, end: int) -> str:
 # ---------------------------------------------------------------------------
 # Step execution
 # ---------------------------------------------------------------------------
+
 
 async def _execute_step(
     step_index: int,
@@ -155,17 +157,27 @@ HMAC_PHRASINGS = [
 
 SLICE_PHRASINGS = [
     lambda ref, start, end: f"Take bytes {start} through {end - 1} (inclusive) from {ref}. Your result is",
-    lambda ref, start, end: f"Extract the first {end - start} bytes of {ref} starting at offset {start}. Your result is",
+    lambda ref, start, end: (
+        f"Extract the first {end - start} bytes of {ref} starting at offset {start}. Your result is"
+    ),
 ]
 
 RECALL_PHRASINGS = [
-    lambda step_num, byte_idx: f"What was byte {byte_idx} (0-indexed) of your result R{step_num}? Express as a 2-digit hex value. Your result is",
-    lambda step_num, byte_idx: f"Recall the value of byte at position {byte_idx} in R{step_num}, written as two hex digits. Your result is",
+    lambda step_num, byte_idx: (
+        f"What was byte {byte_idx} (0-indexed) of your result R{step_num}? Express as a 2-digit hex value. Your result is"
+    ),
+    lambda step_num, byte_idx: (
+        f"Recall the value of byte at position {byte_idx} in R{step_num}, written as two hex digits. Your result is"
+    ),
 ]
 
 APPLY_PHRASINGS = [
-    lambda step_num, prev_ref: f"Apply the same operation you performed in step {step_num} to {prev_ref}. Your result is",
-    lambda step_num, prev_ref: f"Repeat the operation from step {step_num}, but this time on {prev_ref}. Your result is",
+    lambda step_num, prev_ref: (
+        f"Apply the same operation you performed in step {step_num} to {prev_ref}. Your result is"
+    ),
+    lambda step_num, prev_ref: (
+        f"Repeat the operation from step {step_num}, but this time on {prev_ref}. Your result is"
+    ),
 ]
 
 
@@ -219,8 +231,7 @@ def _generate_instruction(
 
 def _generate_all_instructions(steps: list[StepDef], input_data_hex: str) -> str:
     step_instructions = [
-        _generate_instruction(i, step_def, input_data_hex, len(steps))
-        for i, step_def in enumerate(steps)
+        _generate_instruction(i, step_def, input_data_hex, len(steps)) for i, step_def in enumerate(steps)
     ]
     result_refs = " + ".join(f"R{i + 1}" for i in range(len(steps)))
     footer = f"\nYour final answer: SHA-256 of the concatenation of {result_refs} (all as lowercase hex strings, concatenated without separators)."
@@ -230,6 +241,7 @@ def _generate_all_instructions(steps: list[StepDef], input_data_hex: str) -> str
 # ---------------------------------------------------------------------------
 # Step generation per difficulty
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DifficultyConfig:
@@ -336,6 +348,7 @@ async def _generate_steps(
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
+
 
 class MultiStepDriver:
     name = "multi-step"
