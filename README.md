@@ -1,8 +1,18 @@
 # AgentAuth
 
+[![CI](https://github.com/dyshay/agentauth/actions/workflows/ci.yml/badge.svg)](https://github.com/dyshay/agentauth/actions/workflows/ci.yml)
+[![CI — Python](https://github.com/dyshay/agentauth/actions/workflows/ci-python.yml/badge.svg)](https://github.com/dyshay/agentauth/actions/workflows/ci-python.yml)
+[![CI — Rust](https://github.com/dyshay/agentauth/actions/workflows/ci-rust.yml/badge.svg)](https://github.com/dyshay/agentauth/actions/workflows/ci-rust.yml)
+[![CI — Go](https://github.com/dyshay/agentauth/actions/workflows/ci-go.yml/badge.svg)](https://github.com/dyshay/agentauth/actions/workflows/ci-go.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![GitHub stars](https://img.shields.io/github/stars/dyshay/agentauth?style=social)](https://github.com/dyshay/agentauth)
+
 **The authentication protocol for AI agents.**
 
 Traditional CAPTCHAs prove you're human. AgentAuth proves you're a machine — and measures exactly how capable.
+
+[Documentation](https://agentauth.dev/docs) &middot; [API Reference](https://agentauth.dev/api-reference) &middot; [OpenAPI Spec](spec/openapi.yaml) &middot; [GitHub](https://github.com/dyshay/agentauth)
 
 ---
 
@@ -43,8 +53,11 @@ An agent that passes an AgentAuth challenge receives a signed JWT containing:
 ## Installation
 
 ```bash
-# Server — protect your API
+# Server — protect your API (Express, Hono, NestJS)
 npm install @xagentauth/server
+#   Express:  import { AgentAuth } from '@xagentauth/server'
+#   Hono:     import { AgentAuthHono } from '@xagentauth/server/hono'
+#   NestJS:   import { AgentAuthModule } from '@xagentauth/server/nestjs'
 
 # Client SDK — authenticate your agent (TypeScript)
 npm install @xagentauth/client
@@ -195,7 +208,7 @@ agentauth benchmark --rounds 10 --difficulty hard
 agentauth add ./my-challenge && agentauth list
 ```
 
-### 4. React — Embed a Challenge Widget
+### 7. React — Embed a Challenge Widget
 
 ```tsx
 import { ChallengeWidget } from '@xagentauth/react'
@@ -231,7 +244,7 @@ function MyComponent() {
 }
 ```
 
-### 5. Edge — Deploy at the Edge
+### 8. Edge — Deploy at the Edge
 
 **Cloudflare Workers:**
 
@@ -475,12 +488,12 @@ graph TB
 | Package | Description | Status |
 |---------|-------------|--------|
 | [`@xagentauth/core`](packages/core) | Challenge engine, types, scoring, PoMI, timing | Available |
-| [`@xagentauth/server`](packages/server) | Express middleware (challenge, verify, guard) | Available |
+| [`@xagentauth/server`](packages/server) | Server middleware — Express, Hono, NestJS (challenge, verify, guard) | Available |
 | [`@xagentauth/client`](packages/client) | TypeScript client SDK with auto-HMAC | Available |
 | [`@xagentauth/cli`](packages/cli) | CLI — generate, verify, benchmark, registry management | Available |
-| [`xagentauth`](sdks/rust) (crates.io) | Rust client SDK + WASM bindings | Available |
-| [`xagentauth`](sdks/python) (PyPI) | Python client SDK + LangChain/CrewAI integrations | Available |
-| [`xagentauth`](sdks/go) (Go module) | Go client SDK — zero dependencies | Available |
+| [`xagentauth`](sdks/python) (PyPI) | Python SDK — client + LangChain/CrewAI integrations | Available |
+| [`xagentauth`](sdks/rust) (crates.io) | Rust SDK — client + WASM bindings | Available |
+| [`xagentauth`](sdks/go) (Go module) | Go SDK — client, zero dependencies | Available |
 | [`@xagentauth/react`](packages/react) | React hooks & components — useAgentAuth, ChallengeWidget, ScoreBadge | Available |
 | [`@xagentauth/edge-cf`](packages/edge-cf) | Cloudflare Workers adapter — full AgentAuth at the edge | Available |
 | [`@xagentauth/edge-deno`](packages/edge-deno) | Deno Deploy adapter — full AgentAuth at the edge | Available |
@@ -488,7 +501,7 @@ graph TB
 ## Roadmap
 
 - [x] Core protocol — Crypto-NL challenges, multi-step state, ambiguous logic, code execution
-- [x] Express middleware — challenge, verify, guard endpoints
+- [x] Server middleware — Express, Hono, NestJS (challenge, verify, guard)
 - [x] Proof of Model Identity — canary prompts, Bayesian classification
 - [x] Behavioral timing analysis — zone classification, multi-step pattern detection
 - [x] Client SDK — full challenge flow with auto-HMAC
@@ -502,10 +515,11 @@ graph TB
 - [x] Challenge registry (local) and CLI commands
 - [x] Standard HTTP headers (AgentAuth-*)
 - [x] Public model leaderboard
+- [ ] Server-side middleware for Python (FastAPI/Flask), Rust (Axum/Actix), Go (net/http/Gin)
 
 ## Contributing
 
-AgentAuth is open source under the MIT license. Contributions welcome.
+AgentAuth is open source under the MIT license. Contributions welcome — [open an issue](https://github.com/dyshay/agentauth/issues) or submit a PR.
 
 ```bash
 git clone https://github.com/dyshay/agentauth.git
