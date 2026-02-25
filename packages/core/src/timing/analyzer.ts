@@ -32,14 +32,25 @@ export class TimingAnalyzer {
     elapsed_ms: number
     challenge_type: string
     difficulty: Difficulty
+    rtt_ms?: number
   }): TimingAnalysis {
     const baseline = this.baselines.get(`${params.challenge_type}:${params.difficulty}`)
       ?? this.makeDefaultBaseline()
 
-    const zone = this.classifyZone(params.elapsed_ms, baseline)
-    const penalty = this.computePenalty(zone, params.elapsed_ms, baseline)
+    // Apply RTT tolerance to zone boundaries
+    const tolerance = params.rtt_ms && params.rtt_ms > 0 ? Math.max(params.rtt_ms * 0.5, 200) : 0
+    const adjustedBaseline = tolerance > 0
+      ? {
+          ...baseline,
+          ai_upper_ms: baseline.ai_upper_ms + tolerance,
+          human_ms: baseline.human_ms + tolerance,
+        }
+      : baseline
+
+    const zone = this.classifyZone(params.elapsed_ms, adjustedBaseline)
+    const penalty = this.computePenalty(zone, params.elapsed_ms, adjustedBaseline)
     const z_score = this.computeZScore(params.elapsed_ms, baseline)
-    const confidence = this.computeConfidence(params.elapsed_ms, baseline, zone)
+    const confidence = this.computeConfidence(params.elapsed_ms, adjustedBaseline, zone)
 
     return {
       elapsed_ms: params.elapsed_ms,
@@ -47,7 +58,7 @@ export class TimingAnalyzer {
       confidence,
       z_score: Math.round(z_score * 100) / 100,
       penalty: Math.round(penalty * 1000) / 1000,
-      details: this.describeZone(zone, params.elapsed_ms, baseline),
+      details: this.describeZone(zone, params.elapsed_ms, adjustedBaseline),
     }
   }
 

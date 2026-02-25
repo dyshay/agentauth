@@ -53,6 +53,7 @@ export interface ChallengeData {
   attempts: number
   max_attempts: number
   created_at: number
+  created_at_server_ms?: number
   injected_canaries?: Canary[]
 }
 

@@ -39,6 +39,8 @@ export interface SolveInput {
   hmac: string
   canary_responses?: Record<string, string>
   metadata?: { model?: string; framework?: string }
+  client_rtt_ms?: number
+  step_timings?: number[]
 }
 
 export interface VerifyTokenResult {
@@ -137,6 +139,7 @@ export class AgentAuthEngine {
       attempts: 0,
       max_attempts: 3,
       created_at: now,
+      created_at_server_ms: Date.now(),
       injected_canaries: injectedCanaries,
     }
 
@@ -198,11 +201,21 @@ export class AgentAuthEngine {
 
     if (this.timingAnalyzer) {
       const now = Date.now()
-      const elapsed_ms = now - data.challenge.created_at * 1000
+      const baseElapsed = data.created_at_server_ms
+        ? now - data.created_at_server_ms
+        : now - data.challenge.created_at * 1000
+
+      // RTT compensation: subtract client RTT, capped at 50% of elapsed
+      const rttMs = input.client_rtt_ms && input.client_rtt_ms > 0
+        ? Math.min(input.client_rtt_ms, baseElapsed * 0.5)
+        : 0
+      const elapsed_ms = baseElapsed - rttMs
+
       timingAnalysis = this.timingAnalyzer.analyze({
         elapsed_ms,
         challenge_type: data.challenge.payload.type,
         difficulty: data.challenge.difficulty,
+        rtt_ms: rttMs > 0 ? rttMs : undefined,
       })
 
       // Reject too_fast and timeout
