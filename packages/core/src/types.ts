@@ -46,6 +46,7 @@ export interface VerifyResult {
   model_identity?: ModelIdentification
   timing_analysis?: TimingAnalysis
   pattern_analysis?: TimingPatternAnalysis
+  session_anomalies?: SessionTimingAnomaly[]
 }
 
 export interface ChallengeData {
@@ -189,6 +190,14 @@ export interface TimingPatternAnalysis {
   verdict: 'natural' | 'artificial' | 'inconclusive'
 }
 
+export type SessionAnomalyType = 'zone_inconsistency' | 'timing_variance_anomaly' | 'rapid_succession'
+
+export interface SessionTimingAnomaly {
+  type: SessionAnomalyType
+  description: string
+  severity: 'low' | 'medium' | 'high'
+}
+
 export interface TimingConfig {
   enabled: boolean
   baselines?: TimingBaseline[]
@@ -197,4 +206,5 @@ export interface TimingConfig {
   defaultAiUpperMs?: number
   defaultHumanMs?: number
   defaultTimeoutMs?: number
+  sessionTracking?: { enabled: boolean }
 }

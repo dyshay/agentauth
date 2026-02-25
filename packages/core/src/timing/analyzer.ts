@@ -50,7 +50,15 @@ export class TimingAnalyzer {
     const zone = this.classifyZone(params.elapsed_ms, adjustedBaseline)
     const penalty = this.computePenalty(zone, params.elapsed_ms, adjustedBaseline)
     const z_score = this.computeZScore(params.elapsed_ms, baseline)
-    const confidence = this.computeConfidence(params.elapsed_ms, adjustedBaseline, zone)
+    let confidence = this.computeConfidence(params.elapsed_ms, adjustedBaseline, zone)
+    let details = this.describeZone(zone, params.elapsed_ms, adjustedBaseline)
+
+    // Round-number detection: flag suspiciously round elapsed times in ai_zone
+    const isRound = params.elapsed_ms % 500 === 0 || params.elapsed_ms % 100 === 0
+    if (isRound && zone === 'ai_zone' && params.elapsed_ms > 0) {
+      confidence = Math.round(confidence * 0.85 * 1000) / 1000
+      details += ' [round-number timing detected]'
+    }
 
     return {
       elapsed_ms: params.elapsed_ms,
@@ -58,7 +66,7 @@ export class TimingAnalyzer {
       confidence,
       z_score: Math.round(z_score * 100) / 100,
       penalty: Math.round(penalty * 1000) / 1000,
-      details: this.describeZone(zone, params.elapsed_ms, adjustedBaseline),
+      details,
     }
   }
 

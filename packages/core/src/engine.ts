@@ -14,6 +14,7 @@ import type {
   TimingConfig,
   TimingAnalysis,
   TimingPatternAnalysis,
+  SessionTimingAnomaly,
 } from './types.js'
 import { generateId, generateSessionToken, hmacSha256Hex, timingSafeEqual } from './crypto.js'
 import { TokenManager, type AgentAuthJWTPayload } from './token.js'
@@ -22,6 +23,7 @@ import { CanaryCatalog } from './pomi/catalog.js'
 import { CanaryInjector } from './pomi/injector.js'
 import { ModelClassifier } from './pomi/classifier.js'
 import { TimingAnalyzer } from './timing/analyzer.js'
+import { SessionTimingTracker } from './timing/session-tracker.js'
 
 export interface InitChallengeOptions {
   difficulty?: Difficulty
@@ -63,6 +65,7 @@ export class AgentAuthEngine {
   private canaryInjector?: CanaryInjector
   private modelClassifier?: ModelClassifier
   private timingAnalyzer?: TimingAnalyzer
+  private sessionTracker?: SessionTimingTracker
 
   constructor(config: AgentAuthConfig) {
     this.store = config.store
@@ -80,6 +83,9 @@ export class AgentAuthEngine {
     // Initialize timing analyzer if enabled
     if (config.timing?.enabled) {
       this.timingAnalyzer = new TimingAnalyzer(config.timing)
+      if (config.timing.sessionTracking?.enabled) {
+        this.sessionTracker = new SessionTimingTracker()
+      }
     }
 
     // Initialize PoMI if enabled
@@ -253,6 +259,18 @@ export class AgentAuthEngine {
       ? modelIdentity?.family ?? input.metadata?.model ?? 'unknown'
       : input.metadata?.model ?? 'unknown'
 
+    // Session tracking for anti-gaming
+    let sessionAnomalies: SessionTimingAnomaly[] | undefined
+
+    if (this.sessionTracker && timingAnalysis && input.metadata?.model) {
+      const sessionKey = input.metadata.model
+      this.sessionTracker.record(sessionKey, timingAnalysis.elapsed_ms, timingAnalysis.zone)
+      const anomalies = this.sessionTracker.analyze(sessionKey)
+      if (anomalies.length > 0) {
+        sessionAnomalies = anomalies
+      }
+    }
+
     // Generate token
     const token = await this.tokenManager.sign(
       {
@@ -264,7 +282,11 @@ export class AgentAuthEngine {
       { ttlSeconds: this.tokenTtlSeconds },
     )
 
-    return { success: true, score, token, model_identity: modelIdentity, timing_analysis: timingAnalysis, pattern_analysis: patternAnalysis }
+    return {
+      success: true, score, token, model_identity: modelIdentity,
+      timing_analysis: timingAnalysis, pattern_analysis: patternAnalysis,
+      session_anomalies: sessionAnomalies,
+    }
   }
 
   async verifyToken(token: string): Promise<VerifyTokenResult> {
