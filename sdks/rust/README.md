@@ -1,4 +1,4 @@
-# agentauth
+# xagentauth
 
 **AgentAuth client SDK for Rust** — authenticate AI agents against any AgentAuth-compatible server.
 
@@ -6,16 +6,16 @@
 
 ```toml
 [dependencies]
-agentauth = "0.1"
+xagentauth = "0.1"
 ```
 
 ## Quickstart
 
 ```rust
-use agentauth::{AgentAuthClient, ClientConfig, Difficulty};
+use xagentauth::{AgentAuthClient, ClientConfig, Difficulty};
 
 #[tokio::main]
-async fn main() -> Result<(), agentauth::AgentAuthError> {
+async fn main() -> Result<(), xagentauth::AgentAuthError> {
     let client = AgentAuthClient::new(ClientConfig {
         base_url: "https://api.example.com".to_string(),
         api_key: Some("ak_...".to_string()),
@@ -63,7 +63,7 @@ The crate supports compilation to WebAssembly via `wasm-pack`:
 This produces a `pkg/` directory with JS bindings:
 
 ```javascript
-import { WasmAgentAuthClient, wasm_hmac_sha256_hex } from './pkg/agentauth.js';
+import { WasmAgentAuthClient, wasm_hmac_sha256_hex } from './pkg/xagentauth.js';
 
 const client = new WasmAgentAuthClient('https://api.example.com', 'ak_...');
 const result = await client.initChallenge('medium');

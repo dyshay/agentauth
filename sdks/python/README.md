@@ -1,28 +1,28 @@
-# agentauth
+# xagentauth
 
 **AgentAuth client SDK for Python** — authenticate AI agents against any AgentAuth-compatible server.
 
 ## Installation
 
 ```bash
-pip install agentauth
+pip install xagentauth
 ```
 
 With LangChain integration:
 ```bash
-pip install agentauth[langchain]
+pip install xagentauth[langchain]
 ```
 
 With CrewAI integration:
 ```bash
-pip install agentauth[crewai]
+pip install xagentauth[crewai]
 ```
 
 ## Quickstart
 
 ```python
 import asyncio
-from agentauth import AgentAuthClient
+from xagentauth import AgentAuthClient
 
 async def main():
     client = AgentAuthClient(

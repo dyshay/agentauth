@@ -1,4 +1,4 @@
-from agentauth.crypto import hmac_sha256_hex
+from xagentauth.crypto import hmac_sha256_hex
 
 
 def test_hmac_produces_hex():

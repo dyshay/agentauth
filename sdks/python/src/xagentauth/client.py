@@ -4,9 +4,9 @@ from typing import Callable, Awaitable
 
 import httpx
 
-from agentauth.crypto import hmac_sha256_hex
-from agentauth.errors import AgentAuthError
-from agentauth.types import (
+from xagentauth.crypto import hmac_sha256_hex
+from xagentauth.errors import AgentAuthError
+from xagentauth.types import (
     AgentAuthHeaders,
     AuthenticateResult,
     ChallengeResponse,

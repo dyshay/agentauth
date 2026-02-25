@@ -70,5 +70,5 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "Rust SDK ${{ steps.version.outputs.version }}"
-          body: "Published `agentauth@${{ steps.version.outputs.version }}` to [crates.io](https://crates.io/crates/agentauth)"
+          body: "Published `xagentauth@${{ steps.version.outputs.version }}` to [crates.io](https://crates.io/crates/xagentauth)"
           generate_release_notes: true

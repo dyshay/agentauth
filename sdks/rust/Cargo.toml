@@ -1,5 +1,5 @@
 [package]
-name = "agentauth"
+name = "xagentauth"
 version = "0.1.0"
 edition = "2021"
 description = "AgentAuth client SDK for Rust — authenticate AI agents"
