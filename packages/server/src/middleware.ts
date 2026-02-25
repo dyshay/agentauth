@@ -92,6 +92,8 @@ export class AgentAuth {
       const result = await this.engine.solveChallenge(id, input)
 
       if (result.success) {
+        // model_family and pomi_confidence are only set when PoMI ran;
+        // if PoMI is disabled, headers are correctly omitted (buildHeaders skips undefined values).
         const agentHeaders = buildHeaders({
           status: 'verified',
           score: result.score,

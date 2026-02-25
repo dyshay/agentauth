@@ -35,6 +35,7 @@ export type FailReason =
   | 'invalid_hmac'
   | 'too_fast'
   | 'too_slow'
+  | 'timeout'
   | 'rate_limited'
 
 export interface VerifyResult {

@@ -150,10 +150,11 @@ export class AgentAuthEngine {
     if (!data) return null
     if (!timingSafeEqual(data.challenge.session_token, sessionToken)) return null
 
-    // Return challenge without the context (ops) — agent must parse NL
+    // Return challenge without context (ops) and session_token (already known by agent)
     const { context: _context, ...publicPayload } = data.challenge.payload
+    const { session_token: _token, ...challenge } = data.challenge
     return {
-      ...data.challenge,
+      ...challenge,
       payload: publicPayload,
     }
   }
@@ -207,6 +208,9 @@ export class AgentAuthEngine {
       // Reject too_fast and timeout
       if (timingAnalysis.zone === 'too_fast') {
         return { success: false, score: zeroScore, reason: 'too_fast', timing_analysis: timingAnalysis }
+      }
+      if (timingAnalysis.zone === 'timeout') {
+        return { success: false, score: zeroScore, reason: 'timeout', timing_analysis: timingAnalysis }
       }
     }
 

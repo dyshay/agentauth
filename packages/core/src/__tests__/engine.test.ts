@@ -56,6 +56,13 @@ describe('AgentAuthEngine', () => {
       const challenge = await engine.getChallenge('ch_nope', 'st_nope')
       expect(challenge).toBeNull()
     })
+
+    it('does not include session_token in retrieved challenge', async () => {
+      const init = await engine.initChallenge({ difficulty: 'easy' })
+      const challenge = await engine.getChallenge(init.id, init.session_token)
+      expect(challenge).not.toBeNull()
+      expect((challenge as any).session_token).toBeUndefined()
+    })
   })
 
   describe('solveChallenge', () => {
@@ -137,6 +144,36 @@ describe('AgentAuthEngine', () => {
       })
       expect(result.success).toBe(false)
       expect(result.reason).toBe('expired')
+    })
+
+    it('rejects timeout zone', async () => {
+      // Use empty baselines to force fallback to custom defaults,
+      // with all zone boundaries at zero so any real elapsed time exceeds timeout
+      const timingEngine = new AgentAuthEngine({
+        secret: 'test-secret-that-is-at-least-32-bytes-long-for-hs256',
+        store,
+        drivers: [new CryptoNLDriver()],
+        timing: {
+          enabled: true,
+          baselines: [],
+          defaultTooFastMs: 0,
+          defaultAiLowerMs: 0,
+          defaultAiUpperMs: 0,
+          defaultHumanMs: 0,
+          defaultTimeoutMs: 1,
+        },
+      })
+
+      const init = await timingEngine.initChallenge({ difficulty: 'easy' })
+      const stored = await store.get(init.id)
+      const driver = new CryptoNLDriver()
+      const answer = await driver.solve(stored!.challenge.payload)
+      const { hmacSha256Hex } = await import('../crypto.js')
+      const hmac = await hmacSha256Hex(answer, init.session_token)
+
+      const result = await timingEngine.solveChallenge(init.id, { answer, hmac })
+      expect(result.success).toBe(false)
+      expect(result.reason).toBe('timeout')
     })
   })
 

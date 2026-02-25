@@ -25,7 +25,20 @@ describe('Timing integration with AgentAuthEngine', () => {
   }
 
   it('includes timing_analysis in verify result when timing enabled', async () => {
-    const engine = createEngine(true)
+    // Use custom baselines with too_fast_ms=0 to prevent flaky too_fast rejections in tests
+    const engine = new AgentAuthEngine({
+      secret: 'test-secret-at-least-32-chars-long!!',
+      store: new MemoryStore(),
+      drivers: [new CryptoNLDriver()],
+      timing: {
+        enabled: true,
+        baselines: [],
+        defaultTooFastMs: 0,
+        defaultAiUpperMs: 999999,
+        defaultHumanMs: 9999999,
+        defaultTimeoutMs: 99999999,
+      },
+    })
     const { init, answer, hmac } = await initAndSolve(engine)
 
     const result = await engine.solveChallenge(init.id, { answer, hmac })
@@ -45,7 +58,20 @@ describe('Timing integration with AgentAuthEngine', () => {
   })
 
   it('speed score reflects timing penalty', async () => {
-    const engine = createEngine(true)
+    // Use custom baselines with too_fast_ms=0 to prevent flaky too_fast rejections in tests
+    const engine = new AgentAuthEngine({
+      secret: 'test-secret-at-least-32-chars-long!!',
+      store: new MemoryStore(),
+      drivers: [new CryptoNLDriver()],
+      timing: {
+        enabled: true,
+        baselines: [],
+        defaultTooFastMs: 0,
+        defaultAiUpperMs: 999999,
+        defaultHumanMs: 9999999,
+        defaultTimeoutMs: 99999999,
+      },
+    })
     const { init, answer, hmac } = await initAndSolve(engine)
 
     const result = await engine.solveChallenge(init.id, { answer, hmac })
