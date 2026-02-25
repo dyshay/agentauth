@@ -3,8 +3,29 @@ info:
   title: AgentAuth Protocol
   version: '1.0.0'
   description: |
-    Authentication protocol for AI agents. Proves an entity is a real AI agent,
-    measures its capabilities, and identifies its model family.
+    Authentication protocol for AI agents — OAuth for the agentic web.
+    Proves an entity is a real AI agent, measures its capabilities, and identifies its model family.
+
+    ## Authentication Flow
+
+    1. **Init** — `POST /challenge/init` to create a challenge session (public, no auth required).
+    2. **Retrieve** — `GET /challenge/{id}` with the `session_token` as Bearer to fetch the challenge payload.
+    3. **Solve** — `POST /challenge/{id}/solve` with the answer + HMAC signature to receive a signed JWT.
+    4. **Use** — Attach the JWT as `Authorization: Bearer <token>` to protected endpoints.
+    5. **Verify** — `GET /token/verify` to validate a JWT and inspect embedded capabilities.
+
+    ## HMAC Anti-Replay
+
+    Every solve request must include an HMAC to prove possession of the session token:
+
+    ```
+    hmac = HMAC-SHA256(answer, session_token)
+    ```
+
+    Where `answer` is the UTF-8 encoded solution string and `session_token` is the key returned from init.
+    This prevents replay attacks and ensures the solver is the same entity that initiated the challenge.
+  contact:
+    url: https://agentauth.dev
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -15,17 +36,24 @@ servers:
   - url: http://localhost:3000/v1
     description: Local development
 
-security:
-  - apiKey: []
+tags:
+  - name: Challenge
+    description: Challenge lifecycle — create, retrieve, and solve challenges
+  - name: Token
+    description: JWT token verification and inspection
 
 paths:
   /challenge/init:
     post:
       operationId: initChallenge
+      tags: [Challenge]
       summary: Create a challenge session
-      description: Initiates a new challenge for an AI agent to solve.
+      description: |
+        Initiates a new challenge for an AI agent to solve.
+        Both `difficulty` and `dimensions` are optional — the server picks sensible defaults.
+      security: []
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
@@ -55,8 +83,9 @@ paths:
   /challenge/{id}:
     get:
       operationId: getChallenge
+      tags: [Challenge]
       summary: Retrieve a challenge
-      description: Fetches the challenge payload. Requires the session token from init.
+      description: Fetches the challenge payload. Requires the session token from init as Bearer token.
       security:
         - bearerAuth: []
       parameters:
@@ -73,6 +102,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Challenge'
+              example:
+                id: ch_a1b2c3d4e5f6
+                payload:
+                  type: multi-step-reasoning
+                  instructions: 'Decode the base64 data, parse the JSON, and compute the SHA-256 hash of the "answer" field.'
+                  data: eyJhbnN3ZXIiOiAiNDIifQ==
+                  steps: 3
+                difficulty: medium
+                dimensions:
+                  - reasoning
+                  - execution
+                created_at: 1708784370
+                expires_at: 1708784400
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -83,10 +125,20 @@ paths:
   /challenge/{id}/solve:
     post:
       operationId: solveChallenge
+      tags: [Challenge]
       summary: Submit a challenge solution
       description: |
         Submit the answer along with an HMAC signature computed using the session token.
-        On success, returns a signed JWT with capability scores.
+        On success, returns a signed JWT with capability scores and sets `AgentAuth-*` response headers.
+
+        **HMAC computation:**
+
+        ```
+        hmac = HMAC-SHA256(answer, session_token)
+        ```
+
+        Where `answer` is the raw solution string and `session_token` is the key from the init response.
+      security: []
       parameters:
         - name: id
           in: path
@@ -100,12 +152,26 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SolveChallengeRequest'
-            example:
-              answer: 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
-              hmac: 5d41402abc4b2a76b9719d911017c592
-              metadata:
-                model: gpt-4o
-                framework: langchain
+            examples:
+              basic:
+                summary: Basic solve request
+                value:
+                  answer: 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+                  hmac: 5d41402abc4b2a76b9719d911017c592
+                  metadata:
+                    model: gpt-4o
+                    framework: langchain
+              with-canaries:
+                summary: Solve with PoMI canary responses
+                value:
+                  answer: 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+                  hmac: 5d41402abc4b2a76b9719d911017c592
+                  canary_responses:
+                    canary_echo_001: "The quick brown fox"
+                    canary_temp_002: "0.7321"
+                  metadata:
+                    model: claude-3-opus
+                    framework: custom
       responses:
         '200':
           description: Verification result
@@ -114,7 +180,7 @@ paths:
               schema:
                 type: string
                 enum: [verified, unverified]
-              description: Verification status
+              description: Verification status (set on success only)
             AgentAuth-Score:
               schema:
                 type: string
@@ -130,7 +196,7 @@ paths:
             AgentAuth-Capabilities:
               schema:
                 type: string
-              description: "Comma-separated scores: reasoning=0.94,execution=0.98,..."
+              description: 'Comma-separated scores: reasoning=0.94,execution=0.98,...'
             AgentAuth-Version:
               schema:
                 type: string
@@ -143,12 +209,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VerifyResult'
+              examples:
+                success:
+                  summary: Successful verification
+                  value:
+                    success: true
+                    score:
+                      reasoning: 0.94
+                      execution: 0.98
+                      autonomy: 0.91
+                      speed: 0.87
+                      consistency: 0.95
+                    token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZ2VudF8xMjM0NSIsImNhcGFiaWxpdGllcyI6eyJyZWFzb25pbmciOjAuOTR9fQ.signature
+                    model_identity:
+                      family: gpt-4-class
+                      confidence: 0.87
+                      evidence:
+                        - canary_id: canary_echo_001
+                          observed: "The quick brown fox"
+                          expected: "The quick brown fox"
+                          match: true
+                          confidence_contribution: 0.45
+                        - canary_id: canary_temp_002
+                          observed: "0.7321"
+                          expected: "0.7200"
+                          match: false
+                          confidence_contribution: 0.12
+                      alternatives:
+                        - family: claude-3-class
+                          confidence: 0.08
+                    timing_analysis:
+                      elapsed_ms: 2450
+                      zone: ai_zone
+                      confidence: 0.92
+                      z_score: -0.3
+                      penalty: 0
+                      details: Response time 2450ms is within expected AI range (1000-5000ms)
+                failure:
+                  summary: Failed verification
+                  value:
+                    success: false
+                    score:
+                      reasoning: 0
+                      execution: 0
+                      autonomy: 0
+                      speed: 0
+                      consistency: 0
+                    reason: wrong_answer
         '400':
           $ref: '#/components/responses/BadRequest'
 
   /token/verify:
     get:
       operationId: verifyToken
+      tags: [Token]
       summary: Verify an AgentAuth JWT
       description: Validates a JWT token and returns the embedded capabilities.
       security:
@@ -156,45 +270,33 @@ paths:
       responses:
         '200':
           description: Token is valid
-          headers:
-            AgentAuth-Status:
-              schema:
-                type: string
-                enum: [verified, unverified]
-              description: Verification status
-            AgentAuth-Score:
-              schema:
-                type: string
-              description: Average capability score (0-1)
-            AgentAuth-Model-Family:
-              schema:
-                type: string
-              description: Identified model family
-            AgentAuth-Capabilities:
-              schema:
-                type: string
-              description: "Comma-separated scores: reasoning=0.94,execution=0.98,..."
-            AgentAuth-Version:
-              schema:
-                type: string
-              description: AgentAuth protocol version
-            AgentAuth-Token-Expires:
-              schema:
-                type: string
-              description: Token expiration timestamp
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenVerifyResponse'
+              examples:
+                valid:
+                  summary: Valid token
+                  value:
+                    valid: true
+                    capabilities:
+                      reasoning: 0.94
+                      execution: 0.98
+                      autonomy: 0.91
+                      speed: 0.87
+                      consistency: 0.95
+                    model_family: gpt-4-class
+                    issued_at: 1708784400
+                    expires_at: 1708788000
+                invalid:
+                  summary: Invalid or expired token
+                  value:
+                    valid: false
         '401':
           $ref: '#/components/responses/Unauthorized'
 
 components:
   securitySchemes:
-    apiKey:
-      type: apiKey
-      in: header
-      name: X-AgentAuth-Key
     bearerAuth:
       type: http
       scheme: bearer
@@ -249,6 +351,10 @@ components:
         steps:
           type: integer
           minimum: 1
+        context:
+          type: object
+          additionalProperties: true
+          description: Optional driver-specific context
 
     Challenge:
       type: object
@@ -332,17 +438,14 @@ components:
           description: JWT token (present on success)
         reason:
           $ref: '#/components/schemas/FailReason'
-        model_family:
-          type: string
         model_identity:
           $ref: '#/components/schemas/ModelIdentification'
-        expires_at:
-          type: integer
         timing_analysis:
           $ref: '#/components/schemas/TimingAnalysis'
 
     TimingAnalysis:
       type: object
+      required: [elapsed_ms, zone, confidence, z_score, penalty, details]
       description: Behavioral timing analysis of the challenge response
       properties:
         elapsed_ms:
@@ -386,6 +489,7 @@ components:
 
     CanaryEvidence:
       type: object
+      required: [canary_id, observed, expected, match, confidence_contribution]
       properties:
         canary_id:
           type: string
@@ -400,10 +504,11 @@ components:
 
     ModelIdentification:
       type: object
+      required: [family, confidence, evidence, alternatives]
       properties:
         family:
           type: string
-          description: Identified model family (e.g., "gpt-4-class", "claude-3-class", "unknown")
+          description: 'Identified model family (e.g., "gpt-4-class", "claude-3-class", "unknown")'
         confidence:
           type: number
           minimum: 0
@@ -463,6 +568,18 @@ components:
             title: Unauthorized
             status: 401
             detail: Missing or invalid Authorization header
+
+    Forbidden:
+      description: Insufficient capability score
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: https://agentauth.dev/errors/insufficient-score
+            title: Insufficient Capability Score
+            status: 403
+            detail: 'Average score 0.62 below minimum 0.7'
 
     NotFound:
       description: Resource not found

@@ -6,7 +6,10 @@
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "docs": "redocly build-docs spec/openapi.yaml -o apps/web/public/docs/index.html",
+    "docs:preview": "redocly preview-docs spec/openapi.yaml",
+    "docs:lint": "redocly lint spec/openapi.yaml"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",

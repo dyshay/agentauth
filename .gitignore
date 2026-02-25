@@ -8,6 +8,9 @@ build/
 *.tsbuildinfo
 .turbo/
 
+# Generated API docs (built from spec/openapi.yaml via `pnpm run docs`)
+apps/web/public/docs/
+
 # Environment
 .env
 .env.*
