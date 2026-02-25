@@ -501,7 +501,7 @@ graph TB
 - [x] Docker self-host image
 - [x] Challenge registry (local) and CLI commands
 - [x] Standard HTTP headers (AgentAuth-*)
-- [ ] Public model leaderboard
+- [x] Public model leaderboard
 
 ## Contributing
 
