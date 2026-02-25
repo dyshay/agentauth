@@ -172,6 +172,16 @@ paths:
                   metadata:
                     model: claude-3-opus
                     framework: custom
+              with-timing:
+                summary: Solve with RTT compensation and step timings
+                value:
+                  answer: 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+                  hmac: 5d41402abc4b2a76b9719d911017c592
+                  client_rtt_ms: 45
+                  step_timings: [320, 510, 280, 450]
+                  metadata:
+                    model: gpt-4o
+                    framework: langchain
       responses:
         '200':
           description: Verification result
@@ -245,6 +255,11 @@ paths:
                       z_score: -0.3
                       penalty: 0
                       details: Response time 2450ms is within expected AI range (1000-5000ms)
+                    pattern_analysis:
+                      variance_coefficient: 0.28
+                      trend: variable
+                      round_number_ratio: 0.0
+                      verdict: natural
                 failure:
                   summary: Failed verification
                   value:
@@ -417,6 +432,16 @@ components:
           additionalProperties:
             type: string
           description: Responses to canary prompts for Proof of Model Identity (PoMI)
+        client_rtt_ms:
+          type: number
+          minimum: 0
+          description: Client-measured round-trip time in milliseconds, used for network latency compensation. Capped at 50% of elapsed time.
+        step_timings:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          description: Per-step timing in milliseconds for multi-step challenges. Used for pattern analysis to detect artificial timing.
         metadata:
           type: object
           properties:
@@ -442,6 +467,13 @@ components:
           $ref: '#/components/schemas/ModelIdentification'
         timing_analysis:
           $ref: '#/components/schemas/TimingAnalysis'
+        pattern_analysis:
+          $ref: '#/components/schemas/TimingPatternAnalysis'
+        session_anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionTimingAnomaly'
+          description: Cross-session timing anomalies detected (only when session tracking is enabled)
 
     TimingAnalysis:
       type: object
@@ -471,6 +503,46 @@ components:
         details:
           type: string
           description: Human-readable explanation of the timing classification
+
+    TimingPatternAnalysis:
+      type: object
+      required: [variance_coefficient, trend, round_number_ratio, verdict]
+      description: Analysis of per-step timing patterns to detect artificial behavior
+      properties:
+        variance_coefficient:
+          type: number
+          minimum: 0
+          description: Coefficient of variation across step timings (low values suggest scripted behavior)
+        trend:
+          type: string
+          enum: [constant, increasing, decreasing, variable]
+          description: Detected timing trend across steps
+        round_number_ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Ratio of step timings that are round numbers (multiples of 100ms)
+        verdict:
+          type: string
+          enum: [natural, artificial, inconclusive]
+          description: Overall assessment of timing pattern naturalness
+
+    SessionTimingAnomaly:
+      type: object
+      required: [type, description, severity]
+      description: Cross-session timing anomaly detected by the session tracker
+      properties:
+        type:
+          type: string
+          enum: [zone_inconsistency, timing_variance_anomaly, rapid_succession]
+          description: Type of anomaly detected
+        description:
+          type: string
+          description: Human-readable explanation of the anomaly
+        severity:
+          type: string
+          enum: [low, medium, high]
+          description: Severity level of the anomaly
 
     TokenVerifyResponse:
       type: object
