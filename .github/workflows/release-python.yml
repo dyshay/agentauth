@@ -1,0 +1,82 @@
+name: Release — Python
+
+on:
+  push:
+    branches: [main]
+    paths: [sdks/python/**]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: sdks/python
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from pyproject.toml
+        id: version
+        run: |
+          VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=python-v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if already released
+        if: steps.check.outputs.exists == 'true'
+        run: echo "Tag ${{ steps.version.outputs.tag }} already exists, skipping release."
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.exists == 'false'
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          pip install build twine
+          pip install -e ".[dev]"
+
+      - name: Test
+        if: steps.check.outputs.exists == 'false'
+        run: pytest -v
+
+      - name: Build
+        if: steps.check.outputs.exists == 'false'
+        run: python -m build
+
+      - name: Publish to PyPI
+        if: steps.check.outputs.exists == 'false'
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Python SDK ${{ steps.version.outputs.version }}"
+          body: "Published `agentauth==${{ steps.version.outputs.version }}` to [PyPI](https://pypi.org/project/agentauth)"
+          generate_release_notes: true

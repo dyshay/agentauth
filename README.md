@@ -46,11 +46,17 @@ An agent that passes an AgentAuth challenge receives a signed JWT containing:
 # Server — protect your API
 npm install @xagentauth/server
 
-# Client SDK — authenticate your agent
+# Client SDK — authenticate your agent (TypeScript)
 npm install @xagentauth/client
 
 # CLI — test & benchmark locally
 npm install -g @xagentauth/cli
+
+# Python SDK
+pip install agentauth
+
+# Rust SDK
+cargo add agentauth
 ```
 
 ## Quickstart
@@ -116,7 +122,36 @@ const challenge = await client.getChallenge(id, session_token)
 const result = await client.solve(id, answer, session_token)
 ```
 
-### 3. Test with the CLI
+### 3. Authenticate with Python
+
+```python
+from agentauth import AgentAuthClient
+
+async with AgentAuthClient(base_url="https://api.example.com", api_key="ak_...") as client:
+    result = await client.authenticate(
+        solver=my_solver,
+        difficulty="medium",
+    )
+    print(f"Token: {result.token}")
+    print(f"Score: {result.score}")
+```
+
+### 4. Authenticate with Rust
+
+```rust
+let client = AgentAuthClient::new(ClientConfig {
+    base_url: "https://api.example.com".to_string(),
+    api_key: Some("ak_...".to_string()),
+    timeout_ms: None,
+})?;
+
+let result = client.authenticate(Some(Difficulty::Medium), None, |challenge| async move {
+    let answer = compute_answer(&challenge.payload).await;
+    Ok((answer, None))
+}).await?;
+```
+
+### 5. Test with the CLI
 
 ```bash
 # Generate a challenge locally
@@ -340,7 +375,7 @@ graph TB
     Cloud --> SDKs
     Edge --> SDKs
 
-    SDKs["SDK Ecosystem<br/>TypeScript · Python · Go"]
+    SDKs["SDK Ecosystem<br/>TypeScript · Python · Rust"]
 ```
 
 ## Packages
@@ -349,8 +384,10 @@ graph TB
 |---------|-------------|--------|
 | [`@xagentauth/core`](packages/core) | Challenge engine, types, scoring, PoMI, timing | Available |
 | [`@xagentauth/server`](packages/server) | Express middleware (challenge, verify, guard) | Available |
-| [`@xagentauth/client`](packages/client) | Client SDK — authenticate agents against any AgentAuth server | Available |
+| [`@xagentauth/client`](packages/client) | TypeScript client SDK with auto-HMAC | Available |
 | [`@xagentauth/cli`](packages/cli) | CLI — generate, verify, benchmark, registry management | Available |
+| [`agentauth`](sdks/rust) (crates.io) | Rust client SDK + WASM bindings | Available |
+| [`agentauth`](sdks/python) (PyPI) | Python client SDK + LangChain/CrewAI integrations | Available |
 
 ## Roadmap
 
@@ -360,8 +397,9 @@ graph TB
 - [x] Behavioral timing analysis — zone classification, multi-step pattern detection
 - [x] Client SDK — full challenge flow with auto-HMAC
 - [x] CLI — generate, verify, benchmark commands
+- [x] Rust SDK — client + WASM bindings
+- [x] Python SDK — client + LangChain/CrewAI integrations
 - [ ] React components — embedded challenge widget
-- [ ] Python SDK — server + client
 - [ ] Go SDK — server + client
 - [ ] Edge runtime support — Cloudflare Workers, Deno Deploy
 - [x] Docker self-host image
