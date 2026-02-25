@@ -1,0 +1,29 @@
+{
+  "name": "@xagentauth/edge-deno",
+  "version": "0.1.0",
+  "description": "AgentAuth server adapter for Deno Deploy",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@xagentauth/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7",
+    "vitest": "^3"
+  }
+}

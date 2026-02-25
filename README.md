@@ -49,14 +49,21 @@ npm install @xagentauth/server
 # Client SDK — authenticate your agent (TypeScript)
 npm install @xagentauth/client
 
+# React — hooks & components for auth flows
+npm install @xagentauth/react
+
+# Edge — Cloudflare Workers or Deno Deploy
+npm install @xagentauth/edge-cf   # Cloudflare Workers
+npm install @xagentauth/edge-deno  # Deno Deploy
+
 # CLI — test & benchmark locally
 npm install -g @xagentauth/cli
 
 # Python SDK
-pip install agentauth
+pip install xagentauth
 
 # Rust SDK
-cargo add agentauth
+cargo add xagentauth
 ```
 
 ## Quickstart
@@ -125,7 +132,7 @@ const result = await client.solve(id, answer, session_token)
 ### 3. Authenticate with Python
 
 ```python
-from agentauth import AgentAuthClient
+from xagentauth import AgentAuthClient
 
 async with AgentAuthClient(base_url="https://api.example.com", api_key="ak_...") as client:
     result = await client.authenticate(
@@ -165,6 +172,68 @@ agentauth benchmark --rounds 10 --difficulty hard
 
 # Manage challenge packages
 agentauth add ./my-challenge && agentauth list
+```
+
+### 4. React — Embed a Challenge Widget
+
+```tsx
+import { ChallengeWidget } from '@xagentauth/react'
+
+function App() {
+  return (
+    <ChallengeWidget
+      baseUrl="https://api.example.com"
+      apiKey="ak_..."
+      difficulty="medium"
+      onSuccess={(result) => console.log('Authenticated!', result.token)}
+    />
+  )
+}
+```
+
+Or use the headless hook for full control:
+
+```tsx
+import { useAgentAuth } from '@xagentauth/react'
+
+function MyComponent() {
+  const { status, scores, authenticate } = useAgentAuth({
+    baseUrl: 'https://api.example.com',
+    apiKey: 'ak_...',
+  })
+
+  return (
+    <button onClick={() => authenticate({ difficulty: 'medium' })}>
+      {status === 'authenticating' ? 'Solving...' : 'Authenticate'}
+    </button>
+  )
+}
+```
+
+### 5. Edge — Deploy at the Edge
+
+**Cloudflare Workers:**
+
+```typescript
+import { createAgentAuthHandler } from '@xagentauth/edge-cf'
+
+const handler = createAgentAuthHandler({
+  secret: 'your-secret-at-least-32-chars-long',
+})
+
+export default { fetch: handler.fetch }
+```
+
+**Deno Deploy:**
+
+```typescript
+import { createAgentAuthHandler } from '@xagentauth/edge-deno'
+
+const handler = createAgentAuthHandler({
+  secret: 'your-secret-at-least-32-chars-long',
+})
+
+Deno.serve(handler.fetch)
 ```
 
 ---
@@ -369,13 +438,15 @@ graph TB
 
     Protocol --> SelfHost["Self-host<br/>(Docker)"]
     Protocol --> Cloud["Cloud API<br/>(SaaS)"]
-    Protocol --> Edge["Edge<br/>(CF Workers)"]
+    Protocol --> EdgeCF["Edge<br/>(CF Workers)"]
+    Protocol --> EdgeDeno["Edge<br/>(Deno Deploy)"]
 
     SelfHost --> SDKs
     Cloud --> SDKs
-    Edge --> SDKs
+    EdgeCF --> SDKs
+    EdgeDeno --> SDKs
 
-    SDKs["SDK Ecosystem<br/>TypeScript · Python · Rust"]
+    SDKs["SDK Ecosystem<br/>TypeScript · Python · Rust · React"]
 ```
 
 ## Packages
@@ -386,8 +457,11 @@ graph TB
 | [`@xagentauth/server`](packages/server) | Express middleware (challenge, verify, guard) | Available |
 | [`@xagentauth/client`](packages/client) | TypeScript client SDK with auto-HMAC | Available |
 | [`@xagentauth/cli`](packages/cli) | CLI — generate, verify, benchmark, registry management | Available |
-| [`agentauth`](sdks/rust) (crates.io) | Rust client SDK + WASM bindings | Available |
-| [`agentauth`](sdks/python) (PyPI) | Python client SDK + LangChain/CrewAI integrations | Available |
+| [`xagentauth`](sdks/rust) (crates.io) | Rust client SDK + WASM bindings | Available |
+| [`xagentauth`](sdks/python) (PyPI) | Python client SDK + LangChain/CrewAI integrations | Available |
+| [`@xagentauth/react`](packages/react) | React hooks & components — useAgentAuth, ChallengeWidget, ScoreBadge | Available |
+| [`@xagentauth/edge-cf`](packages/edge-cf) | Cloudflare Workers adapter — full AgentAuth at the edge | Available |
+| [`@xagentauth/edge-deno`](packages/edge-deno) | Deno Deploy adapter — full AgentAuth at the edge | Available |
 
 ## Roadmap
 
@@ -397,11 +471,11 @@ graph TB
 - [x] Behavioral timing analysis — zone classification, multi-step pattern detection
 - [x] Client SDK — full challenge flow with auto-HMAC
 - [x] CLI — generate, verify, benchmark commands
-- [x] Rust SDK — client + WASM bindings
+- [x] React components — hooks, ScoreBadge, StatusIndicator, ChallengeWidget
 - [x] Python SDK — client + LangChain/CrewAI integrations
-- [ ] React components — embedded challenge widget
+- [x] Rust SDK — client + WASM bindings
 - [ ] Go SDK — server + client
-- [ ] Edge runtime support — Cloudflare Workers, Deno Deploy
+- [x] Edge runtime — Cloudflare Workers and Deno Deploy adapters
 - [x] Docker self-host image
 - [x] Challenge registry (local) and CLI commands
 - [x] Standard HTTP headers (AgentAuth-*)
