@@ -13,6 +13,7 @@ import type {
   ModelIdentification,
   TimingConfig,
   TimingAnalysis,
+  TimingPatternAnalysis,
 } from './types.js'
 import { generateId, generateSessionToken, hmacSha256Hex, timingSafeEqual } from './crypto.js'
 import { TokenManager, type AgentAuthJWTPayload } from './token.js'
@@ -227,8 +228,15 @@ export class AgentAuthEngine {
       }
     }
 
+    // Analyze per-step timing patterns
+    let patternAnalysis: TimingPatternAnalysis | undefined
+
+    if (this.timingAnalyzer && input.step_timings?.length) {
+      patternAnalysis = this.timingAnalyzer.analyzePattern(input.step_timings)
+    }
+
     // Compute capability score
-    const score = this.computeScore(data, timingAnalysis)
+    const score = this.computeScore(data, timingAnalysis, patternAnalysis)
 
     // Classify model identity if PoMI is enabled
     let modelIdentity: ModelIdentification | undefined
@@ -256,7 +264,7 @@ export class AgentAuthEngine {
       { ttlSeconds: this.tokenTtlSeconds },
     )
 
-    return { success: true, score, token, model_identity: modelIdentity, timing_analysis: timingAnalysis }
+    return { success: true, score, token, model_identity: modelIdentity, timing_analysis: timingAnalysis, pattern_analysis: patternAnalysis }
   }
 
   async verifyToken(token: string): Promise<VerifyTokenResult> {
@@ -274,19 +282,26 @@ export class AgentAuthEngine {
     }
   }
 
-  private computeScore(data: ChallengeData, timingAnalysis?: TimingAnalysis): AgentCapabilityScore {
+  private computeScore(data: ChallengeData, timingAnalysis?: TimingAnalysis, patternAnalysis?: TimingPatternAnalysis): AgentCapabilityScore {
     const dims = data.challenge.dimensions
     const penalty = timingAnalysis?.penalty ?? 0
     const zone = timingAnalysis?.zone
+
+    // Pattern-based penalty: artificial verdict reduces autonomy and consistency
+    const patternPenalty = patternAnalysis?.verdict === 'artificial' ? 0.3 : 0
 
     return {
       reasoning: dims.includes('reasoning') ? 0.9 : 0.5,
       execution: dims.includes('execution') ? 0.95 : 0.5,
       speed: Math.round((1 - penalty) * 0.95 * 1000) / 1000,
-      autonomy: (zone === 'human' || zone === 'suspicious')
-        ? Math.round((1 - penalty) * 0.9 * 1000) / 1000
-        : 0.9,
-      consistency: dims.includes('memory') ? 0.92 : 0.9,
+      autonomy: Math.round(
+        ((zone === 'human' || zone === 'suspicious')
+          ? (1 - penalty) * 0.9
+          : 0.9) * (1 - patternPenalty) * 1000,
+      ) / 1000,
+      consistency: Math.round(
+        (dims.includes('memory') ? 0.92 : 0.9) * (1 - patternPenalty) * 1000,
+      ) / 1000,
     }
   }
 }

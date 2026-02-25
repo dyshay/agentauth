@@ -45,6 +45,7 @@ export interface VerifyResult {
   reason?: FailReason
   model_identity?: ModelIdentification
   timing_analysis?: TimingAnalysis
+  pattern_analysis?: TimingPatternAnalysis
 }
 
 export interface ChallengeData {
