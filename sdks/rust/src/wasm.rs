@@ -1,5 +1,5 @@
-use wasm_bindgen::prelude::*;
 use crate::crypto::hmac_sha256_hex;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub fn wasm_hmac_sha256_hex(message: &str, secret: &str) -> String {
@@ -40,7 +40,10 @@ impl WasmAgentAuthClient {
         }
 
         let resp = req.send().await.map_err(|e| JsError::new(&e.to_string()))?;
-        let json: serde_json::Value = resp.json().await.map_err(|e| JsError::new(&e.to_string()))?;
+        let json: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| JsError::new(&e.to_string()))?;
         serde_wasm_bindgen::to_value(&json).map_err(|e| JsError::new(&e.to_string()))
     }
 

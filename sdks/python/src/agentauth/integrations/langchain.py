@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable, Awaitable, Optional, Type
+from typing import Callable, Awaitable, Optional, Type
 
 from pydantic import BaseModel, Field
 
@@ -11,7 +11,7 @@ except ImportError:
     raise ImportError("langchain-core is required. Install with: pip install agentauth[langchain]")
 
 from agentauth.client import AgentAuthClient
-from agentauth.types import ChallengeResponse, SolverResult, Difficulty
+from agentauth.types import ChallengeResponse, SolverResult
 
 
 class AgentAuthInput(BaseModel):

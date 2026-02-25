@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Awaitable, Optional
+from typing import Callable, Awaitable
 
 import httpx
 

@@ -73,21 +73,26 @@ async def test_http_error(client: AgentAuthClient, httpx_mock: HTTPXMock):
 @pytest.mark.asyncio
 async def test_authenticate(client: AgentAuthClient, httpx_mock: HTTPXMock):
     httpx_mock.add_response(
-        url="https://api.test.com/v1/challenge/init", method="POST",
+        url="https://api.test.com/v1/challenge/init",
+        method="POST",
         json={"id": "ch_1", "session_token": "st_1", "expires_at": 9999999999, "ttl_seconds": 30},
         status_code=201,
     )
     httpx_mock.add_response(
-        url="https://api.test.com/v1/challenge/ch_1", method="GET",
+        url="https://api.test.com/v1/challenge/ch_1",
+        method="GET",
         json={
             "id": "ch_1",
             "payload": {"type": "crypto-nl", "instructions": "test", "data": "AA==", "steps": 1},
-            "difficulty": "easy", "dimensions": ["reasoning"],
-            "created_at": 1000, "expires_at": 2000,
+            "difficulty": "easy",
+            "dimensions": ["reasoning"],
+            "created_at": 1000,
+            "expires_at": 2000,
         },
     )
     httpx_mock.add_response(
-        url="https://api.test.com/v1/challenge/ch_1/solve", method="POST",
+        url="https://api.test.com/v1/challenge/ch_1/solve",
+        method="POST",
         json={
             "success": True,
             "score": {"reasoning": 0.9, "execution": 0.9, "autonomy": 0.9, "speed": 0.9, "consistency": 0.9},
