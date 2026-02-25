@@ -30,10 +30,12 @@ func (s *simpleStore) Delete(id string) error {
 // testDriver is a minimal challenge driver for engine tests.
 type testDriver struct{}
 
-func (d *testDriver) Name() string                   { return "test" }
-func (d *testDriver) Dimensions() []ChallengeDimension { return []ChallengeDimension{DimensionReasoning, DimensionExecution} }
-func (d *testDriver) EstimatedHumanTimeMs() int64    { return 60000 }
-func (d *testDriver) EstimatedAITimeMs() int64       { return 500 }
+func (d *testDriver) Name() string { return "test" }
+func (d *testDriver) Dimensions() []ChallengeDimension {
+	return []ChallengeDimension{DimensionReasoning, DimensionExecution}
+}
+func (d *testDriver) EstimatedHumanTimeMs() int64 { return 60000 }
+func (d *testDriver) EstimatedAITimeMs() int64    { return 500 }
 
 func (d *testDriver) Generate(difficulty Difficulty) (*ChallengePayload, string, error) {
 	answer := "correct_answer"

@@ -8,10 +8,10 @@ type mockDriver struct {
 	dimensions []ChallengeDimension
 }
 
-func (m *mockDriver) Name() string                   { return m.name }
+func (m *mockDriver) Name() string                     { return m.name }
 func (m *mockDriver) Dimensions() []ChallengeDimension { return m.dimensions }
-func (m *mockDriver) EstimatedHumanTimeMs() int64    { return 60000 }
-func (m *mockDriver) EstimatedAITimeMs() int64       { return 500 }
+func (m *mockDriver) EstimatedHumanTimeMs() int64      { return 60000 }
+func (m *mockDriver) EstimatedAITimeMs() int64         { return 500 }
 func (m *mockDriver) Generate(d Difficulty) (*ChallengePayload, string, error) {
 	return &ChallengePayload{Type: m.name}, "hash", nil
 }
