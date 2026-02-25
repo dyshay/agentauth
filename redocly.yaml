@@ -1,2 +1,7 @@
+extends:
+  - recommended
+
 rules:
   no-server-example.com: off
+  security-defined: off
+  no-unused-components: off
