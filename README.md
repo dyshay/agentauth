@@ -64,6 +64,9 @@ pip install xagentauth
 
 # Rust SDK
 cargo add xagentauth
+
+# Go SDK
+go get github.com/dyshay/agentauth/sdks/go
 ```
 
 ## Quickstart
@@ -158,7 +161,25 @@ let result = client.authenticate(Some(Difficulty::Medium), None, |challenge| asy
 }).await?;
 ```
 
-### 5. Test with the CLI
+### 5. Authenticate with Go
+
+```go
+import xagentauth "github.com/dyshay/agentauth/sdks/go"
+
+client := xagentauth.NewClient(xagentauth.ClientConfig{
+    BaseURL: "https://api.example.com",
+    APIKey:  "ak_...",
+})
+
+result, err := client.Authenticate(xagentauth.DifficultyMedium, nil,
+    func(c xagentauth.ChallengeResponse) (string, map[string]string, error) {
+        answer := computeAnswer(c.Payload)
+        return answer, nil, nil
+    },
+)
+```
+
+### 6. Test with the CLI
 
 ```bash
 # Generate a challenge locally
@@ -446,7 +467,7 @@ graph TB
     EdgeCF --> SDKs
     EdgeDeno --> SDKs
 
-    SDKs["SDK Ecosystem<br/>TypeScript · Python · Rust · React"]
+    SDKs["SDK Ecosystem<br/>TypeScript · Python · Rust · Go · React"]
 ```
 
 ## Packages
@@ -459,6 +480,7 @@ graph TB
 | [`@xagentauth/cli`](packages/cli) | CLI — generate, verify, benchmark, registry management | Available |
 | [`xagentauth`](sdks/rust) (crates.io) | Rust client SDK + WASM bindings | Available |
 | [`xagentauth`](sdks/python) (PyPI) | Python client SDK + LangChain/CrewAI integrations | Available |
+| [`xagentauth`](sdks/go) (Go module) | Go client SDK — zero dependencies | Available |
 | [`@xagentauth/react`](packages/react) | React hooks & components — useAgentAuth, ChallengeWidget, ScoreBadge | Available |
 | [`@xagentauth/edge-cf`](packages/edge-cf) | Cloudflare Workers adapter — full AgentAuth at the edge | Available |
 | [`@xagentauth/edge-deno`](packages/edge-deno) | Deno Deploy adapter — full AgentAuth at the edge | Available |
@@ -474,7 +496,7 @@ graph TB
 - [x] React components — hooks, ScoreBadge, StatusIndicator, ChallengeWidget
 - [x] Python SDK — client + LangChain/CrewAI integrations
 - [x] Rust SDK — client + WASM bindings
-- [ ] Go SDK — server + client
+- [x] Go SDK — client with zero dependencies
 - [x] Edge runtime — Cloudflare Workers and Deno Deploy adapters
 - [x] Docker self-host image
 - [x] Challenge registry (local) and CLI commands
