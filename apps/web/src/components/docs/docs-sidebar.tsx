@@ -47,7 +47,7 @@ export function DocsSidebar() {
 
   return (
     <aside className="w-56 shrink-0 hidden lg:block">
-      <nav className="sticky top-[96px] space-y-6 pr-4">
+      <nav className="sticky top-[84px] space-y-6 pr-4">
         {sections.map((section) => (
           <div key={section.title}>
             <h4 className="text-xs font-heading font-semibold text-zinc-500 uppercase tracking-widest mb-2">
