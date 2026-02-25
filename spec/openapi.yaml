@@ -402,7 +402,7 @@ components:
 
     FailReason:
       type: string
-      enum: [wrong_answer, expired, already_used, invalid_hmac, too_fast, too_slow, rate_limited]
+      enum: [wrong_answer, expired, already_used, invalid_hmac, too_fast, too_slow, timeout, rate_limited]
 
     SolveChallengeRequest:
       type: object
