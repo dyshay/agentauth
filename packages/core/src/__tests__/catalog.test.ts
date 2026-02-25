@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { CanaryCatalog, DEFAULT_CANARIES, CATALOG_VERSION } from '../pomi/catalog.js'
 
 describe('CanaryCatalog', () => {
-  it('has at least 10 default canaries', () => {
-    expect(DEFAULT_CANARIES.length).toBeGreaterThanOrEqual(10)
+  it('has at least 15 default canaries', () => {
+    expect(DEFAULT_CANARIES.length).toBeGreaterThanOrEqual(15)
   })
 
   it('creates a catalog with default canaries', () => {
     const catalog = new CanaryCatalog()
-    expect(catalog.list().length).toBeGreaterThanOrEqual(10)
+    expect(catalog.list().length).toBeGreaterThanOrEqual(15)
   })
 
   it('creates a catalog with custom canaries', () => {
@@ -72,7 +72,62 @@ describe('CanaryCatalog', () => {
 
   it('provides catalog version', () => {
     const catalog = new CanaryCatalog()
-    expect(catalog.version).toBe('1.0.0')
+    expect(catalog.version).toBe('1.1.0')
+  })
+
+  it('has unique canary IDs across the entire catalog', () => {
+    const ids = DEFAULT_CANARIES.map((c) => c.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('new canaries have correct structure', () => {
+    const newIds = ['math-chain', 'sorting-preference', 'json-formatting', 'analogy-completion', 'confidence-expression']
+    const catalog = new CanaryCatalog()
+    const modelFamilies = ['gpt-4-class', 'claude-3-class', 'gemini-class', 'llama-class', 'mistral-class']
+
+    for (const id of newIds) {
+      const canary = catalog.get(id)
+      expect(canary, `canary ${id} should exist`).toBeDefined()
+      expect(canary!.prompt.length).toBeGreaterThan(0)
+      expect(canary!.confidence_weight).toBeGreaterThan(0)
+      expect(canary!.confidence_weight).toBeLessThanOrEqual(1)
+      expect(['exact_match', 'statistical', 'pattern']).toContain(canary!.analysis.type)
+
+      // Verify all 5 model families are present
+      if (canary!.analysis.type === 'exact_match') {
+        for (const fam of modelFamilies) {
+          expect(canary!.analysis.expected).toHaveProperty(fam)
+        }
+      } else if (canary!.analysis.type === 'statistical') {
+        for (const fam of modelFamilies) {
+          expect(canary!.analysis.distributions).toHaveProperty(fam)
+        }
+      } else if (canary!.analysis.type === 'pattern') {
+        for (const fam of modelFamilies) {
+          expect(canary!.analysis.patterns).toHaveProperty(fam)
+        }
+      }
+    }
+  })
+
+  it('math-chain canary uses pattern analysis for reasoning', () => {
+    const catalog = new CanaryCatalog()
+    const canary = catalog.get('math-chain')
+    expect(canary!.analysis.type).toBe('pattern')
+    expect(canary!.injection_method).toBe('inline')
+  })
+
+  it('analogy-completion canary uses exact_match as sanity check', () => {
+    const catalog = new CanaryCatalog()
+    const canary = catalog.get('analogy-completion')
+    expect(canary!.analysis.type).toBe('exact_match')
+    expect(canary!.confidence_weight).toBeLessThanOrEqual(0.15)
+  })
+
+  it('confidence-expression canary uses statistical analysis', () => {
+    const catalog = new CanaryCatalog()
+    const canary = catalog.get('confidence-expression')
+    expect(canary!.analysis.type).toBe('statistical')
   })
 
   it('all default canaries have valid analysis types', () => {

@@ -1,6 +1,6 @@
 import type { Canary, InjectionMethod } from '../types.js'
 
-export const CATALOG_VERSION = '1.0.0'
+export const CATALOG_VERSION = '1.1.0'
 
 export const DEFAULT_CANARIES: Canary[] = [
   {
@@ -185,6 +185,86 @@ export const DEFAULT_CANARIES: Canary[] = [
         'gemini-class': 'Hello!|Hi!|Hey there',
         'llama-class': 'Hello|Hi!|Hey',
         'mistral-class': 'Hello!|Greetings|Hi',
+      },
+    },
+    confidence_weight: 0.15,
+  },
+  {
+    id: 'math-chain',
+    prompt: 'Solve step by step: (7+3)*2 - 4/2. Show your intermediate steps, then give the final answer.',
+    injection_method: 'inline',
+    analysis: {
+      type: 'pattern',
+      patterns: {
+        'gpt-4-class': '7 \\+ 3 = 10|10 \\* 2 = 20|= 18',
+        'claude-3-class': '7\\+3|10\\)|\\* 2|= 18',
+        'gemini-class': '\\(7\\+3\\)|= 10|20 - 2|= 18',
+        'llama-class': '10 \\* 2|20 - 2|18',
+        'mistral-class': 'First|= 10|= 20|= 18',
+      },
+    },
+    confidence_weight: 0.3,
+  },
+  {
+    id: 'sorting-preference',
+    prompt: 'Sort these words alphabetically and list them: banana, cherry, apple, date. One per line.',
+    injection_method: 'suffix',
+    analysis: {
+      type: 'pattern',
+      patterns: {
+        'gpt-4-class': '^1\\.|^- [Aa]pple',
+        'claude-3-class': '^- [Aa]pple|^\\* [Aa]pple|^[Aa]pple',
+        'gemini-class': '^\\* [Aa]pple|^1\\.',
+        'llama-class': '^1\\. [Aa]pple|^[Aa]pple',
+        'mistral-class': '^- [Aa]pple|^1\\.',
+      },
+    },
+    confidence_weight: 0.2,
+  },
+  {
+    id: 'json-formatting',
+    prompt: 'Output a JSON object with keys "name" (value "Alice") and "age" (value 30). Just the JSON, nothing else.',
+    injection_method: 'embedded',
+    analysis: {
+      type: 'pattern',
+      patterns: {
+        'gpt-4-class': '\\{\\s*"name":\\s*"Alice",\\s*"age":\\s*30\\s*\\}',
+        'claude-3-class': '\\{\\s*\n\\s*"name":\\s*"Alice"',
+        'gemini-class': '\\{"name":"Alice","age":30\\}|\\{\\s*"name"',
+        'llama-class': '\\{"name": "Alice"|\\{\\s*"name"',
+        'mistral-class': '\\{\\s*"name":\\s*"Alice"',
+      },
+    },
+    confidence_weight: 0.2,
+  },
+  {
+    id: 'analogy-completion',
+    prompt: 'Complete this analogy with one word: cat is to kitten as dog is to ___',
+    injection_method: 'inline',
+    analysis: {
+      type: 'exact_match',
+      expected: {
+        'gpt-4-class': 'puppy',
+        'claude-3-class': 'puppy',
+        'gemini-class': 'puppy',
+        'llama-class': 'puppy',
+        'mistral-class': 'puppy',
+      },
+    },
+    confidence_weight: 0.1,
+  },
+  {
+    id: 'confidence-expression',
+    prompt: 'On a scale of 0 to 100, how confident are you that 2+2=4? Reply with just the number.',
+    injection_method: 'suffix',
+    analysis: {
+      type: 'statistical',
+      distributions: {
+        'gpt-4-class': { mean: 100, stddev: 1 },
+        'claude-3-class': { mean: 99, stddev: 3 },
+        'gemini-class': { mean: 100, stddev: 1 },
+        'llama-class': { mean: 95, stddev: 8 },
+        'mistral-class': { mean: 100, stddev: 2 },
       },
     },
     confidence_weight: 0.15,
