@@ -1,17 +1,31 @@
 from xagentauth.types import (
     AgentCapabilityScore,
+    AgentAuthConfig,
     AgentAuthHeaders,
     AuthenticateResult,
+    Canary,
+    CanaryEvidence,
+    ChallengeData,
     ChallengePayload,
     ChallengeResponse,
     ChallengeDimension,
     Difficulty,
+    InitChallengeOptions,
     InitChallengeResponse,
+    InitChallengeResult,
     ModelIdentification,
+    PomiConfig,
+    SessionTimingAnomaly,
+    SolveInput,
     SolveResponse,
     SolverResult,
     TimingAnalysis,
+    TimingBaseline,
+    TimingConfig,
+    TimingPatternAnalysis,
+    VerifyResult,
     VerifyTokenResponse,
+    VerifyTokenResult,
 )
 from xagentauth.client import AgentAuthClient
 from xagentauth.errors import AgentAuthError
@@ -22,32 +36,90 @@ from xagentauth.headers import (
     format_capabilities,
     parse_capabilities,
 )
+from xagentauth.engine import AgentAuthEngine
+from xagentauth.registry import ChallengeRegistry
+from xagentauth.stores.memory import MemoryStore
+from xagentauth.challenges import (
+    CryptoNLDriver,
+    CodeExecutionDriver,
+    MultiStepDriver,
+    AmbiguousLogicDriver,
+)
+from xagentauth.pomi import (
+    CanaryCatalog,
+    CanaryInjector,
+    CanaryExtractor,
+    ModelClassifier,
+)
+from xagentauth.timing import (
+    TimingAnalyzer,
+    SessionTimingTracker,
+    DEFAULT_BASELINES,
+)
 
 __all__ = [
+    # Engine
+    "AgentAuthEngine",
+    # Client
     "AgentAuthClient",
-    "AgentAuthClaims",
     "AgentAuthError",
-    "AGENTAUTH_HEADERS",
+    # Types
     "AgentCapabilityScore",
+    "AgentAuthConfig",
     "AgentAuthHeaders",
     "AuthenticateResult",
+    "Canary",
+    "CanaryEvidence",
+    "ChallengeData",
     "ChallengePayload",
     "ChallengeResponse",
     "ChallengeDimension",
     "Difficulty",
-    "GuardConfig",
-    "GuardResult",
+    "InitChallengeOptions",
     "InitChallengeResponse",
+    "InitChallengeResult",
     "ModelIdentification",
+    "PomiConfig",
+    "SessionTimingAnomaly",
+    "SolveInput",
     "SolveResponse",
     "SolverResult",
     "TimingAnalysis",
+    "TimingBaseline",
+    "TimingConfig",
+    "TimingPatternAnalysis",
+    "VerifyResult",
+    "VerifyTokenResponse",
+    "VerifyTokenResult",
+    # Token
+    "AgentAuthClaims",
     "TokenSignInput",
     "TokenVerifier",
-    "VerifyTokenResponse",
+    # Guard
+    "GuardConfig",
+    "GuardResult",
+    "verify_request",
+    # Headers
+    "AGENTAUTH_HEADERS",
     "format_capabilities",
     "parse_capabilities",
-    "verify_request",
+    # Registry & Store
+    "ChallengeRegistry",
+    "MemoryStore",
+    # Challenge Drivers
+    "CryptoNLDriver",
+    "CodeExecutionDriver",
+    "MultiStepDriver",
+    "AmbiguousLogicDriver",
+    # PoMI
+    "CanaryCatalog",
+    "CanaryInjector",
+    "CanaryExtractor",
+    "ModelClassifier",
+    # Timing
+    "TimingAnalyzer",
+    "SessionTimingTracker",
+    "DEFAULT_BASELINES",
 ]
 
 __version__ = "0.1.0"
