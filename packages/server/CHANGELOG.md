@@ -1,5 +1,11 @@
 # @xagentauth/server
 
+## 0.3.0
+
+### Minor Changes
+
+- [#20](https://github.com/dyshay/agentauth/pull/20) [`161ed57`](https://github.com/dyshay/agentauth/commit/161ed57412a241e546e902a52d98384ea196063b) Thanks [@dyshay](https://github.com/dyshay)! - Add Hono middleware adapter (AgentAuthHono) with challenge, retrieve, verify, tokenVerify, and guard handlers
+
 ## 0.2.2
 
 ### Patch Changes
