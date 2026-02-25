@@ -1,6 +1,6 @@
 # xagentauth
 
-**AgentAuth client SDK for Rust** — authenticate AI agents against any AgentAuth-compatible server.
+**AgentAuth SDK for Rust** — authenticate AI agents and protect your endpoints.
 
 ## Installation
 
@@ -9,7 +9,13 @@
 xagentauth = "0.1"
 ```
 
-## Quickstart
+With framework middleware (feature flags):
+```toml
+xagentauth = { version = "0.1", features = ["axum"] }   # Axum middleware
+xagentauth = { version = "0.1", features = ["actix"] }  # Actix middleware
+```
+
+## Client — Authenticate Agents
 
 ```rust
 use xagentauth::{AgentAuthClient, ClientConfig, Difficulty};
@@ -22,7 +28,7 @@ async fn main() -> Result<(), xagentauth::AgentAuthError> {
         timeout_ms: None,
     })?;
 
-    // One-call flow: init → get → solve
+    // One-call flow: init -> get -> solve
     let result = client
         .authenticate(Some(Difficulty::Medium), None, |challenge| async move {
             let answer = compute_answer(&challenge.payload).await;
@@ -51,6 +57,85 @@ let (result, headers) = client
 println!("Token: {:?}", result.token);
 ```
 
+## Server — Protect Endpoints
+
+### Token Verification
+
+Verify AgentAuth JWTs locally (no network round-trip):
+
+```rust
+use xagentauth::token::{TokenVerifier, AgentAuthClaims};
+
+let verifier = TokenVerifier::new("your-shared-secret");
+
+// Verify signature, issuer, and expiration
+let claims: AgentAuthClaims = verifier.verify(token)?;
+println!("Model: {}", claims.model_family);
+println!("Score: {:?}", claims.capabilities);
+
+// Decode without verification (for inspection)
+let claims = verifier.decode_unchecked(token)?;
+```
+
+### Guard Logic
+
+Framework-agnostic request verification with minimum score enforcement:
+
+```rust
+use xagentauth::guard::{GuardConfig, verify_request};
+
+let config = GuardConfig::new("your-shared-secret").with_min_score(0.8);
+let result = verify_request(token, &config)?;
+
+println!("Model: {}", result.claims.model_family);
+// result.headers contains AgentAuth-* response headers
+```
+
+### Axum Middleware
+
+Requires `features = ["axum"]`.
+
+```rust
+use axum::{routing::get, Router};
+use xagentauth::guard::GuardConfig;
+use xagentauth::middleware::axum::{agentauth_layer, AgentAuthToken};
+
+async fn handler(token: AgentAuthToken) -> String {
+    format!("Hello, agent {}", token.0.model_family)
+}
+
+let config = GuardConfig::new("your-shared-secret");
+let app = Router::new()
+    .route("/protected", get(handler))
+    .layer(agentauth_layer(config));
+```
+
+The `AgentAuthToken` extractor gives handlers direct access to verified claims.
+
+### Actix Middleware
+
+Requires `features = ["actix"]`.
+
+```rust
+use actix_web::{web, App, HttpServer, HttpResponse};
+use xagentauth::guard::GuardConfig;
+use xagentauth::middleware::actix::{AgentAuthMiddleware, AgentAuthToken};
+
+async fn handler(token: AgentAuthToken) -> HttpResponse {
+    HttpResponse::Ok().body(format!("Hello, agent {}", token.0.model_family))
+}
+
+let config = GuardConfig::new("your-shared-secret");
+HttpServer::new(move || {
+    App::new()
+        .wrap(AgentAuthMiddleware::new(config.clone()))
+        .route("/protected", web::get().to(handler))
+})
+.bind("127.0.0.1:8080")?
+.run()
+.await?;
+```
+
 ## WASM Support
 
 The crate supports compilation to WebAssembly via `wasm-pack`:
@@ -59,8 +144,6 @@ The crate supports compilation to WebAssembly via `wasm-pack`:
 # Requires wasm-pack: cargo install wasm-pack
 ./build-wasm.sh
 ```
-
-This produces a `pkg/` directory with JS bindings:
 
 ```javascript
 import { WasmAgentAuthClient, wasm_hmac_sha256_hex } from './pkg/xagentauth.js';
@@ -73,10 +156,13 @@ const hmac = client.computeHmac(answer, sessionToken);
 ## Features
 
 - Async client with `reqwest` (native) or `fetch` (WASM)
-- Full challenge flow: init → get → solve → verify → authenticate
+- Full challenge flow: init -> get -> solve -> verify -> authenticate
 - Auto-HMAC computation on solve requests
 - AgentAuth response header parsing
 - WASM bindings via `wasm-bindgen`
+- **Local JWT verification** (HS256, no network call)
+- **Axum Tower layer** with claims extractor
+- **Actix middleware** with claims extractor
 
 ## License
 
