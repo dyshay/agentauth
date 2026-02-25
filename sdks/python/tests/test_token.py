@@ -4,7 +4,8 @@ import jwt
 import pytest
 
 from xagentauth.errors import AgentAuthError
-from xagentauth.token import AgentAuthClaims, TokenVerifier
+from xagentauth.token import AgentAuthClaims, TokenSignInput, TokenVerifier
+from xagentauth.types import AgentCapabilityScore
 
 SECRET = "test-secret-key-for-agentauth"
 
@@ -74,3 +75,60 @@ class TestTokenVerifier:
         claims = verifier.decode(token)
         assert claims.sub == "agent-123"
         assert claims.model_family == "gpt-4"
+
+
+class TestTokenSign:
+    def test_sign_produces_verifiable_token(self) -> None:
+        verifier = TokenVerifier(SECRET)
+        sign_input = TokenSignInput(
+            sub="agent-456",
+            capabilities=AgentCapabilityScore(
+                reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88
+            ),
+            model_family="gpt-4",
+            challenge_ids=["ch-001"],
+        )
+
+        token = verifier.sign(sign_input)
+        claims = verifier.verify(token)
+
+        assert claims.sub == "agent-456"
+        assert claims.model_family == "gpt-4"
+        assert claims.iss == "agentauth"
+        assert claims.agentauth_version == "1"
+        assert claims.capabilities.reasoning == 0.9
+        assert claims.challenge_ids == ["ch-001"]
+
+    def test_sign_with_custom_ttl(self) -> None:
+        verifier = TokenVerifier(SECRET)
+        sign_input = TokenSignInput(
+            sub="agent-456",
+            capabilities=AgentCapabilityScore(
+                reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88
+            ),
+            model_family="gpt-4",
+            challenge_ids=["ch-001"],
+        )
+
+        token = verifier.sign(sign_input, ttl_seconds=60)
+        claims = verifier.verify(token)
+
+        assert claims.exp - claims.iat == 60
+
+    def test_sign_generates_unique_jti(self) -> None:
+        verifier = TokenVerifier(SECRET)
+        sign_input = TokenSignInput(
+            sub="agent-456",
+            capabilities=AgentCapabilityScore(
+                reasoning=0.9, execution=0.85, autonomy=0.8, speed=0.75, consistency=0.88
+            ),
+            model_family="gpt-4",
+            challenge_ids=["ch-001"],
+        )
+
+        token1 = verifier.sign(sign_input)
+        token2 = verifier.sign(sign_input)
+
+        claims1 = verifier.decode(token1)
+        claims2 = verifier.decode(token2)
+        assert claims1.jti != claims2.jti

@@ -15,13 +15,19 @@ from xagentauth.types import (
 )
 from xagentauth.client import AgentAuthClient
 from xagentauth.errors import AgentAuthError
-from xagentauth.token import AgentAuthClaims, TokenVerifier
+from xagentauth.token import AgentAuthClaims, TokenSignInput, TokenVerifier
 from xagentauth.guard import GuardConfig, GuardResult, verify_request
+from xagentauth.headers import (
+    AGENTAUTH_HEADERS,
+    format_capabilities,
+    parse_capabilities,
+)
 
 __all__ = [
     "AgentAuthClient",
     "AgentAuthClaims",
     "AgentAuthError",
+    "AGENTAUTH_HEADERS",
     "AgentCapabilityScore",
     "AgentAuthHeaders",
     "AuthenticateResult",
@@ -36,8 +42,11 @@ __all__ = [
     "SolveResponse",
     "SolverResult",
     "TimingAnalysis",
+    "TokenSignInput",
     "TokenVerifier",
     "VerifyTokenResponse",
+    "format_capabilities",
+    "parse_capabilities",
     "verify_request",
 ]
 

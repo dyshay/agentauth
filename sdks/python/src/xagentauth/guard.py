@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from xagentauth.errors import AgentAuthError
+from xagentauth.headers import format_capabilities
 from xagentauth.token import AgentAuthClaims, TokenVerifier
 
 
@@ -41,10 +42,11 @@ def verify_request(token: str, config: GuardConfig) -> GuardResult:
         "AgentAuth-Status": "verified",
         "AgentAuth-Score": f"{avg:.2f}",
         "AgentAuth-Model-Family": claims.model_family,
+        "AgentAuth-Capabilities": format_capabilities(claims.capabilities),
         "AgentAuth-Version": claims.agentauth_version,
     }
     if claims.challenge_ids:
-        headers["AgentAuth-Challenge-ID"] = claims.challenge_ids[0]
+        headers["AgentAuth-Challenge-Id"] = claims.challenge_ids[0]
     headers["AgentAuth-Token-Expires"] = str(claims.exp)
 
     return GuardResult(claims=claims, headers=headers)
