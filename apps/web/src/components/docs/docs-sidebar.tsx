@@ -11,6 +11,7 @@ const sections: SidebarSection[] = [
     items: [
       { label: 'Overview', to: '/docs' },
       { label: 'Quickstart', to: '/docs/quickstart' },
+      { label: 'Protecting Endpoints', to: '/docs/protecting-endpoints' },
     ],
   },
   {
@@ -26,6 +27,12 @@ const sections: SidebarSection[] = [
       { label: 'Python', to: '/docs/sdk/python' },
       { label: 'Rust', to: '/docs/sdk/rust' },
       { label: 'Go', to: '/docs/sdk/go' },
+    ],
+  },
+  {
+    title: 'Tools',
+    items: [
+      { label: 'CLI Reference', to: '/docs/cli' },
     ],
   },
   {
