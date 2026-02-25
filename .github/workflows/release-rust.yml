@@ -2,21 +2,73 @@ name: Release — Rust
 
 on:
   push:
-    tags: ["rust-v*"]
+    branches: [main]
+    paths: [sdks/rust/**]
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: sdks/rust
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from Cargo.toml
+        id: version
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=rust-v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if already released
+        if: steps.check.outputs.exists == 'true'
+        run: echo "Tag ${{ steps.version.outputs.tag }} already exists, skipping release."
 
       - uses: dtolnay/rust-toolchain@stable
+        if: steps.check.outputs.exists == 'false'
 
-      - run: cargo test
+      - uses: Swatinem/rust-cache@v2
+        if: steps.check.outputs.exists == 'false'
+        with:
+          workspaces: sdks/rust
 
-      - run: cargo publish
+      - name: Test
+        if: steps.check.outputs.exists == 'false'
+        run: cargo test
+
+      - name: Publish to crates.io
+        if: steps.check.outputs.exists == 'false'
+        run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Create tag and GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Rust SDK ${{ steps.version.outputs.version }}"
+          body: "Published `agentauth@${{ steps.version.outputs.version }}` to [crates.io](https://crates.io/crates/agentauth)"
+          generate_release_notes: true
