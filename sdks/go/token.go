@@ -123,6 +123,59 @@ func (v *TokenVerifier) Decode(token string) (*AgentAuthClaims, error) {
 	return &claims, nil
 }
 
+// TokenSignInput contains the fields needed to sign a new AgentAuth JWT.
+type TokenSignInput struct {
+	Sub          string
+	Capabilities AgentCapabilityScore
+	ModelFamily  string
+	ChallengeIDs []string
+}
+
+// Sign creates a new HS256 JWT token with the given claims.
+// ttlSeconds defaults to 3600 (1 hour) if set to 0.
+func (v *TokenVerifier) Sign(input *TokenSignInput, ttlSeconds int64) (string, error) {
+	if ttlSeconds == 0 {
+		ttlSeconds = 3600
+	}
+
+	now := time.Now().Unix()
+	jti := fmt.Sprintf("%016x%016x", time.Now().UnixNano(), time.Now().UnixNano()%1000000)
+
+	claims := AgentAuthClaims{
+		Sub:              input.Sub,
+		Iss:              "agentauth",
+		Iat:              now,
+		Exp:              now + ttlSeconds,
+		Jti:              jti,
+		Capabilities:     input.Capabilities,
+		ModelFamily:      input.ModelFamily,
+		ChallengeIDs:     input.ChallengeIDs,
+		AgentAuthVersion: "1",
+	}
+
+	// Encode header
+	header := jwtHeader{Alg: "HS256", Typ: "JWT"}
+	headerJSON, err := json.Marshal(header)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal header: %w", err)
+	}
+
+	claimsJSON, err := json.Marshal(claims)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal claims: %w", err)
+	}
+
+	headerB64 := base64.RawURLEncoding.EncodeToString(headerJSON)
+	claimsB64 := base64.RawURLEncoding.EncodeToString(claimsJSON)
+
+	signingInput := headerB64 + "." + claimsB64
+	mac := hmac.New(sha256.New, v.secret)
+	mac.Write([]byte(signingInput))
+	sig := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+
+	return signingInput + "." + sig, nil
+}
+
 // base64URLDecode decodes a base64url-encoded string (with or without padding).
 func base64URLDecode(s string) ([]byte, error) {
 	// Add padding if necessary

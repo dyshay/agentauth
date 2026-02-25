@@ -60,14 +60,15 @@ func VerifyRequest(token string, config *GuardConfig) (*GuardResult, *GuardError
 	}
 
 	headers := map[string]string{
-		"AgentAuth-Status":        "verified",
-		"AgentAuth-Score":         fmt.Sprintf("%.2f", avg),
-		"AgentAuth-Model-Family":  claims.ModelFamily,
-		"AgentAuth-Version":       claims.AgentAuthVersion,
-		"AgentAuth-Token-Expires": fmt.Sprintf("%d", claims.Exp),
+		HeaderStatus:       "verified",
+		HeaderScore:        fmt.Sprintf("%.2f", avg),
+		HeaderModelFamily:  claims.ModelFamily,
+		HeaderCapabilities: FormatCapabilities(claims.Capabilities),
+		HeaderVersion:      claims.AgentAuthVersion,
+		HeaderTokenExpires: fmt.Sprintf("%d", claims.Exp),
 	}
 	if len(claims.ChallengeIDs) > 0 {
-		headers["AgentAuth-Challenge-ID"] = claims.ChallengeIDs[0]
+		headers[HeaderChallengeID] = claims.ChallengeIDs[0]
 	}
 
 	return &GuardResult{Claims: claims, Headers: headers}, nil
