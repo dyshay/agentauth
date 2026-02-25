@@ -1,0 +1,20 @@
+{
+  "name": "agentauth-express-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@xagentauth/core": "workspace:*",
+    "@xagentauth/server": "workspace:*",
+    "express": "^5"
+  },
+  "devDependencies": {
+    "@types/express": "^5",
+    "tsx": "^4",
+    "typescript": "^5.7"
+  }
+}
