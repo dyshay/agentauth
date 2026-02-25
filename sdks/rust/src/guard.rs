@@ -64,14 +64,8 @@ pub fn verify_request(token: &str, config: &GuardConfig) -> Result<GuardResult, 
     let mut headers = vec![
         ("AgentAuth-Status".into(), "verified".into()),
         ("AgentAuth-Score".into(), format!("{avg:.2}")),
-        (
-            "AgentAuth-Model-Family".into(),
-            claims.model_family.clone(),
-        ),
-        (
-            "AgentAuth-Version".into(),
-            claims.agentauth_version.clone(),
-        ),
+        ("AgentAuth-Model-Family".into(), claims.model_family.clone()),
+        ("AgentAuth-Version".into(), claims.agentauth_version.clone()),
     ];
     if let Some(cid) = claims.challenge_ids.first() {
         headers.push(("AgentAuth-Challenge-ID".into(), cid.clone()));
@@ -97,7 +91,13 @@ mod tests {
             .as_secs()
     }
 
-    fn sign_token(reasoning: f64, execution: f64, autonomy: f64, speed: f64, consistency: f64) -> String {
+    fn sign_token(
+        reasoning: f64,
+        execution: f64,
+        autonomy: f64,
+        speed: f64,
+        consistency: f64,
+    ) -> String {
         let claims = AgentAuthClaims {
             sub: "agent-123".into(),
             iss: "agentauth".into(),
@@ -125,7 +125,10 @@ mod tests {
         let config = GuardConfig::new(SECRET);
         let result = verify_request(&token, &config).unwrap();
         assert_eq!(result.claims.sub, "agent-123");
-        assert!(result.headers.iter().any(|(k, v)| k == "AgentAuth-Status" && v == "verified"));
+        assert!(result
+            .headers
+            .iter()
+            .any(|(k, v)| k == "AgentAuth-Status" && v == "verified"));
     }
 
     #[test]

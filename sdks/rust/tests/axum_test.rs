@@ -17,7 +17,13 @@ fn now_secs() -> u64 {
         .as_secs()
 }
 
-fn sign_token(reasoning: f64, execution: f64, autonomy: f64, speed: f64, consistency: f64) -> String {
+fn sign_token(
+    reasoning: f64,
+    execution: f64,
+    autonomy: f64,
+    speed: f64,
+    consistency: f64,
+) -> String {
     let claims = AgentAuthClaims {
         sub: "agent-123".into(),
         iss: "agentauth".into(),
@@ -80,11 +86,19 @@ async fn test_returns_200_with_valid_token() {
     let resp = app.oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
     assert_eq!(
-        resp.headers().get("AgentAuth-Status").unwrap().to_str().unwrap(),
+        resp.headers()
+            .get("AgentAuth-Status")
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "verified"
     );
     assert_eq!(
-        resp.headers().get("AgentAuth-Model-Family").unwrap().to_str().unwrap(),
+        resp.headers()
+            .get("AgentAuth-Model-Family")
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "gpt-4"
     );
 }
@@ -102,7 +116,9 @@ async fn test_claims_extractor_works() {
     let resp = app.oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let text = String::from_utf8(body.to_vec()).unwrap();
     assert_eq!(text, "model:gpt-4");
 }

@@ -179,9 +179,7 @@ where
                 }
                 Poll::Ready(Ok(response))
             }
-            AgentAuthFutureProj::Error { response } => {
-                Poll::Ready(Ok(response.take().unwrap()))
-            }
+            AgentAuthFutureProj::Error { response } => Poll::Ready(Ok(response.take().unwrap())),
         }
     }
 }
