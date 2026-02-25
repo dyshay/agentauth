@@ -1,5 +1,11 @@
 # @xagentauth/core
 
+## 0.4.0
+
+### Minor Changes
+
+- [#21](https://github.com/dyshay/agentauth/pull/21) [`c6c224d`](https://github.com/dyshay/agentauth/commit/c6c224d03bb83d309c536fa78209b07a053e98ef) Thanks [@dyshay](https://github.com/dyshay)! - Add production store adapters (RedisStore, PostgresStore, KVStore) and fix protocol coherence bugs (session_token leak in getChallenge, timeout zone rejection)
+
 ## 0.3.0
 
 ### Minor Changes
