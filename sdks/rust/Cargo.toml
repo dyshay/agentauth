@@ -23,6 +23,11 @@ sha2 = "0.10"
 hex = "0.4"
 thiserror = "2"
 jsonwebtoken = "9"
+getrandom = "0.2"
+rand = "0.8"
+base64 = "0.22"
+regex = "1"
+async-trait = "0.1"
 
 # Axum feature deps
 axum = { version = "0.8", optional = true }
