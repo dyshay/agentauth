@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field
 try:
     from langchain_core.tools import BaseTool
 except ImportError:
-    raise ImportError("langchain-core is required. Install with: pip install agentauth[langchain]")
+    raise ImportError("langchain-core is required. Install with: pip install xagentauth[langchain]")
 
-from agentauth.client import AgentAuthClient
-from agentauth.types import ChallengeResponse, SolverResult
+from xagentauth.client import AgentAuthClient
+from xagentauth.types import ChallengeResponse, SolverResult
 
 
 class AgentAuthInput(BaseModel):

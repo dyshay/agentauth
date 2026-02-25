@@ -1,7 +1,7 @@
 import pytest
 from pytest_httpx import HTTPXMock
 
-from agentauth import AgentAuthClient, AgentAuthError, SolverResult
+from xagentauth import AgentAuthClient, AgentAuthError, SolverResult
 
 
 @pytest.fixture

@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field
 try:
     from crewai_tools import BaseTool as CrewAIBaseTool
 except ImportError:
-    raise ImportError("crewai-tools is required. Install with: pip install agentauth[crewai]")
+    raise ImportError("crewai-tools is required. Install with: pip install xagentauth[crewai]")
 
-from agentauth.client import AgentAuthClient
-from agentauth.types import ChallengeResponse, SolverResult
+from xagentauth.client import AgentAuthClient
+from xagentauth.types import ChallengeResponse, SolverResult
 
 
 class AgentAuthToolInput(BaseModel):

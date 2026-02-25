@@ -1,4 +1,4 @@
-use agentauth::crypto::{hmac_sha256_hex, timing_safe_equal};
+use xagentauth::crypto::{hmac_sha256_hex, timing_safe_equal};
 
 #[test]
 fn test_hmac_sha256_produces_hex() {

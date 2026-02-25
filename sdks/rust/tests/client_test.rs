@@ -1,7 +1,7 @@
-use agentauth::{AgentAuthClient, ClientConfig};
 use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
+use xagentauth::{AgentAuthClient, ClientConfig};
 
 #[tokio::test]
 async fn test_init_challenge() {

@@ -1,4 +1,4 @@
-from agentauth.types import (
+from xagentauth.types import (
     AgentCapabilityScore,
     AgentAuthHeaders,
     AuthenticateResult,
@@ -13,8 +13,8 @@ from agentauth.types import (
     TimingAnalysis,
     VerifyTokenResponse,
 )
-from agentauth.client import AgentAuthClient
-from agentauth.errors import AgentAuthError
+from xagentauth.client import AgentAuthClient
+from xagentauth.errors import AgentAuthError
 
 __all__ = [
     "AgentAuthClient",

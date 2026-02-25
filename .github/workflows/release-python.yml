@@ -78,5 +78,5 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "Python SDK ${{ steps.version.outputs.version }}"
-          body: "Published `agentauth==${{ steps.version.outputs.version }}` to [PyPI](https://pypi.org/project/agentauth)"
+          body: "Published `xagentauth==${{ steps.version.outputs.version }}` to [PyPI](https://pypi.org/project/xagentauth)"
           generate_release_notes: true
