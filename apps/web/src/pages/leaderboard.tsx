@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { leaderboardData, type ModelScore } from '../data/leaderboard'
+import { type ModelScore } from '../data/leaderboard'
 import { useInView } from '../hooks/use-in-view'
+import { useLeaderboard } from '../hooks/use-leaderboard'
 
 type SortKey = keyof Pick<ModelScore, 'overall' | 'reasoning' | 'execution' | 'autonomy' | 'speed' | 'consistency'>
 
@@ -46,6 +47,7 @@ export function LeaderboardPage() {
   const [sortBy, setSortBy] = useState<SortKey>('overall')
   const { ref: headerRef, isInView: headerVisible } = useInView()
   const { ref: tableRef, isInView: tableVisible } = useInView()
+  const { data: leaderboardData, isLive } = useLeaderboard()
 
   const sorted = [...leaderboardData].sort((a, b) => b[sortBy] - a[sortBy])
 
@@ -162,7 +164,7 @@ export function LeaderboardPage() {
         </div>
 
         <p className="mt-8 text-center font-mono text-[10px] text-zinc-700 tracking-wider uppercase">
-          Scores from AgentAuth challenge performance &middot; Mock data &mdash; live feed coming soon
+          Scores from AgentAuth challenge performance &middot; {isLive ? 'Live data' : 'Static data'}
         </p>
       </div>
     </section>
