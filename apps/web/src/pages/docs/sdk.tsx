@@ -43,11 +43,17 @@ console.log(verified.capabilities)`,
     package: 'xagentauth',
     install: `pip install xagentauth
 
+# With FastAPI server middleware
+pip install xagentauth[fastapi]
+
+# With Flask server middleware
+pip install xagentauth[flask]
+
 # With LangChain integration
 pip install xagentauth[langchain]
 
-# With CrewAI integration
-pip install xagentauth[crewai]`,
+# All extras
+pip install xagentauth[all]`,
     installLang: 'bash',
     usage: `import asyncio
 from xagentauth import AgentAuthClient
@@ -73,14 +79,36 @@ async def main():
     answer = await compute_answer(challenge.payload)
     result = await client.solve(init.id, answer, init.session_token)
 
-asyncio.run(main())`,
+asyncio.run(main())
+
+# --- Server-side: protect your API routes ---
+
+from fastapi import Depends, FastAPI
+from xagentauth.middleware.fastapi import agentauth_guard
+from xagentauth.token import AgentAuthClaims
+
+app = FastAPI()
+
+@app.get("/api/data", dependencies=[Depends(agentauth_guard("secret"))])
+def get_data():
+    return {"message": "Hello, verified agent!"}
+
+@app.get("/api/profile")
+def profile(claims: AgentAuthClaims = Depends(agentauth_guard("secret"))):
+    return {"model": claims.model_family}`,
     usageLang: 'python',
     status: 'stable',
   },
   rust: {
     name: 'Rust',
     package: 'xagentauth',
-    install: 'cargo add xagentauth',
+    install: `cargo add xagentauth
+
+# With Axum middleware
+cargo add xagentauth --features axum
+
+# With Actix middleware
+cargo add xagentauth --features actix`,
     installLang: 'bash',
     usage: `use xagentauth::{AgentAuthClient, ClientConfig, Difficulty};
 
@@ -102,30 +130,40 @@ async fn main() -> Result<(), xagentauth::AgentAuthError> {
 
     println!("Token: {:?}", result.token);
     println!("Score: {:?}", result.score);
-
-    // Or step by step
-    let init = client.init_challenge(Some(Difficulty::Hard), None).await?;
-    let challenge = client.get_challenge(&init.id, &init.session_token).await?;
-    let answer = compute_answer(&challenge.payload).await;
-    let (result, headers) = client
-        .solve(&init.id, &answer, &init.session_token, None, None)
-        .await?;
-
     Ok(())
-}`,
+}
+
+// --- Server-side: protect your Axum routes ---
+
+use axum::{routing::get, Router};
+use xagentauth::guard::GuardConfig;
+use xagentauth::middleware::axum::{agentauth_layer, AgentAuthToken};
+
+async fn handler(token: AgentAuthToken) -> String {
+    format!("Hello, {} (model: {})", token.0.sub, token.0.model_family)
+}
+
+let config = GuardConfig::new("secret").with_min_score(0.7);
+let app = Router::new()
+    .route("/api/data", get(handler))
+    .layer(agentauth_layer(config));`,
     usageLang: 'rust',
     status: 'stable',
   },
   go: {
     name: 'Go',
     package: 'github.com/dyshay/agentauth/sdks/go',
-    install: 'go get github.com/dyshay/agentauth/sdks/go',
+    install: `go get github.com/dyshay/agentauth/sdks/go
+
+# With Gin middleware
+go get github.com/dyshay/agentauth/sdks/go/ginauth`,
     installLang: 'bash',
     usage: `package main
 
 import (
     "fmt"
     "log"
+    "net/http"
 
     "github.com/dyshay/agentauth/sdks/go"
 )
@@ -158,8 +196,22 @@ func main() {
 
     if result.Success {
         fmt.Printf("Token: %s\\n", *result.Token)
-        fmt.Printf("Scores: %+v\\n", result.Score)
     }
+
+    // --- Server-side: protect your routes (stdlib only) ---
+
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/data", func(w http.ResponseWriter, r *http.Request) {
+        claims := xagentauth.ClaimsFromContext(r.Context())
+        fmt.Fprintf(w, "Hello, %s (model: %s)", claims.Sub, claims.ModelFamily)
+    })
+
+    protected := xagentauth.AgentAuthMiddleware(xagentauth.GuardConfig{
+        Secret:   "your-secret",
+        MinScore: 0.7,
+    })(mux)
+
+    http.ListenAndServe(":3000", protected)
 }`,
     usageLang: 'go',
     status: 'stable',
