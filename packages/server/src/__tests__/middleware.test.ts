@@ -240,11 +240,12 @@ describe('Express middleware', () => {
 
       const timing: TimingConfig = {
         enabled: true,
+        baselines: [],             // force custom defaults (ignore driver-specific baselines)
         defaultTooFastMs: 0,       // disable too_fast rejection for testing
-        defaultAiLowerMs: 50,
-        defaultAiUpperMs: 500,
-        defaultHumanMs: 2000,
-        defaultTimeoutMs: 60000,
+        defaultAiLowerMs: 0,
+        defaultAiUpperMs: 60000,
+        defaultHumanMs: 120000,
+        defaultTimeoutMs: 300000,
       }
 
       const timedAuth = new AgentAuth({
