@@ -8,6 +8,8 @@ import { DocsQuickstart } from './pages/docs/quickstart'
 import { DocsConcepts } from './pages/docs/concepts'
 import { DocsSdk } from './pages/docs/sdk'
 import { DocsSelfHosting } from './pages/docs/self-hosting'
+import { DocsCli } from './pages/docs/cli'
+import { DocsProtectingEndpoints } from './pages/docs/protecting-endpoints'
 
 export function App() {
   return (
@@ -20,6 +22,8 @@ export function App() {
           <Route path="quickstart" element={<DocsQuickstart />} />
           <Route path="concepts" element={<DocsConcepts />} />
           <Route path="sdk/:name" element={<DocsSdk />} />
+          <Route path="cli" element={<DocsCli />} />
+          <Route path="protecting-endpoints" element={<DocsProtectingEndpoints />} />
           <Route path="self-hosting" element={<DocsSelfHosting />} />
         </Route>
       </Route>
