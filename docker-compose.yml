@@ -7,8 +7,28 @@ services:
       - AGENTAUTH_SECRET=${AGENTAUTH_SECRET:?Set AGENTAUTH_SECRET (min 32 chars)}
       - POMI_ENABLED=${POMI_ENABLED:-true}
       - TIMING_ENABLED=${TIMING_ENABLED:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 30s
       timeout: 3s
       retries: 3
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis-data:
