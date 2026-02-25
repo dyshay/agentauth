@@ -93,7 +93,7 @@ fn phrasing(op: &ByteOperation) -> String {
     match &op.op {
         OpType::Xor => {
             let key = op.params["key"].as_u64().unwrap_or(0);
-            let options = vec![
+            let options = [
                 format!("XOR each byte with 0x{:02X}", key),
                 format!("Apply exclusive-or with the value {} to every byte", key),
                 format!("Bitwise XOR each octet using the key {}", key),
@@ -102,7 +102,7 @@ fn phrasing(op: &ByteOperation) -> String {
             options[rng.gen_range(0..options.len())].clone()
         }
         OpType::Reverse => {
-            let options = vec![
+            let options = [
                 "Reverse the byte order".to_string(),
                 "Flip the sequence end-to-end".to_string(),
                 "Mirror the byte array so the last byte becomes first".to_string(),
@@ -113,7 +113,7 @@ fn phrasing(op: &ByteOperation) -> String {
         OpType::Slice => {
             let start = op.params["start"].as_u64().unwrap_or(0);
             let end = op.params["end"].as_u64().unwrap_or(0);
-            let options = vec![
+            let options = [
                 format!("Take bytes from offset {} to {}", start, end),
                 format!("Extract the slice [{}:{}] from the data", start, end),
                 format!(
@@ -125,7 +125,7 @@ fn phrasing(op: &ByteOperation) -> String {
             options[rng.gen_range(0..options.len())].clone()
         }
         OpType::Sort => {
-            let options = vec![
+            let options = [
                 "Sort all bytes in ascending order".to_string(),
                 "Arrange the bytes from smallest to largest value".to_string(),
                 "Order the octets numerically, lowest first".to_string(),
@@ -134,7 +134,7 @@ fn phrasing(op: &ByteOperation) -> String {
         }
         OpType::Rotate => {
             let pos = op.params["positions"].as_u64().unwrap_or(0);
-            let options = vec![
+            let options = [
                 format!("Rotate the bytes left by {} positions", pos),
                 format!(
                     "Shift all bytes {} positions to the left, wrapping around",
@@ -145,7 +145,7 @@ fn phrasing(op: &ByteOperation) -> String {
             options[rng.gen_range(0..options.len())].clone()
         }
         OpType::Sha256 => {
-            let options = vec![
+            let options = [
                 "Compute the SHA-256 hash of the current data (producing 32 raw bytes)".to_string(),
                 "Hash the byte array with SHA-256, replacing it with the 32-byte digest"
                     .to_string(),
@@ -154,7 +154,7 @@ fn phrasing(op: &ByteOperation) -> String {
             options[rng.gen_range(0..options.len())].clone()
         }
         OpType::BitwiseNot => {
-            let options = vec![
+            let options = [
                 "Flip every bit in each byte (bitwise NOT, masked to 8 bits)".to_string(),
                 "Apply bitwise complement to every byte (~byte & 0xFF)".to_string(),
                 "Invert all bits in the array \u{2014} each byte becomes its one's complement"
@@ -164,7 +164,7 @@ fn phrasing(op: &ByteOperation) -> String {
         }
         OpType::Repeat => {
             let times = op.params["times"].as_u64().unwrap_or(2);
-            let options = vec![
+            let options = [
                 format!(
                     "Concatenate the array with itself {} times (total {}x copies)",
                     times, times
@@ -179,8 +179,7 @@ fn phrasing(op: &ByteOperation) -> String {
         }
         OpType::Hmac => {
             let key_hex = op.params["keyHex"].as_str().unwrap_or("");
-            let options = vec![
-                format!(
+            let options = [format!(
                     "Compute HMAC-SHA256 of the data using the hex key {} (producing 32 raw bytes)",
                     key_hex
                 ),
@@ -191,19 +190,16 @@ fn phrasing(op: &ByteOperation) -> String {
                 format!(
                     "Apply HMAC-SHA256 using the secret key (hex) {} \u{2014} the result is 32 raw bytes",
                     key_hex
-                ),
-            ];
+                )];
             options[rng.gen_range(0..options.len())].clone()
         }
         OpType::Base64Encode => {
-            let options = vec![
-                "Base64-encode the data, then treat the resulting ASCII string as a new byte array"
+            let options = ["Base64-encode the data, then treat the resulting ASCII string as a new byte array"
                     .to_string(),
                 "Encode the bytes as a base64 string and reinterpret its characters as byte values"
                     .to_string(),
                 "Convert the data to base64 and use the encoded string's character codes as the new bytes"
-                    .to_string(),
-            ];
+                    .to_string()];
             options[rng.gen_range(0..options.len())].clone()
         }
     }

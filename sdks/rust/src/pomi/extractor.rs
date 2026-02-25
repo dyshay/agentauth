@@ -58,7 +58,7 @@ impl CanaryExtractor {
         let mut best_match = String::new();
         let mut is_match = false;
 
-        for (_family, exp) in expected {
+        for exp in expected.values() {
             if observed.trim().to_lowercase() == exp.trim().to_lowercase() {
                 best_match = exp.clone();
                 is_match = true;
@@ -92,7 +92,7 @@ impl CanaryExtractor {
         let mut best_pattern = String::new();
         let mut is_match = false;
 
-        for (_family, pattern) in patterns {
+        for pattern in patterns.values() {
             if let Ok(re) = Regex::new(&format!("(?i){}", pattern)) {
                 if re.is_match(observed) {
                     best_pattern = pattern.clone();

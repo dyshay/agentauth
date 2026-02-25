@@ -88,7 +88,7 @@ fn lucky_number_template(data: &[u8], difficulty: &Difficulty) -> TemplateResult
         }
     }
 
-    let phrasings = vec![
+    let phrasings = [
         format!(
             "You are given {} bytes of data (base64-encoded).\n\
              If the number of bytes is a lucky number, XOR each byte with 7.\n\
@@ -140,13 +140,11 @@ fn famous_constant_template(data: &[u8], _difficulty: &Difficulty) -> TemplateRe
         },
     ];
 
-    let phrasings = vec![
-        "XOR each byte of the provided data with the most famous mathematical constant's first two digits as an integer.\n\
+    let phrasings = ["XOR each byte of the provided data with the most famous mathematical constant's first two digits as an integer.\n\
          Return the hex-encoded result.".to_string(),
         "Take the universally recognized mathematical constant, extract its first two digits as a whole number, \
          and XOR every byte of the data with that number.\n\
-         Provide the hex-encoded output.".to_string(),
-    ];
+         Provide the hex-encoded output.".to_string()];
 
     TemplateResult {
         instructions: phrasings[rng.gen_range(0..phrasings.len())].clone(),
@@ -204,7 +202,7 @@ fn big_small_template(data: &[u8], _difficulty: &Difficulty) -> TemplateResult {
         });
     }
 
-    let phrasings = vec![
+    let phrasings = [
         "If the first byte of the data is big, reverse the entire byte array.\n\
          Otherwise, sort all bytes in ascending order.\n\
          Return the hex-encoded result."

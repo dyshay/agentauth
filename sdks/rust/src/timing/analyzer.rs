@@ -24,11 +24,7 @@ struct DefaultThresholds {
 impl TimingAnalyzer {
     pub fn new(config: &TimingConfig) -> Self {
         let mut baselines = HashMap::new();
-        let all = config
-            .baselines
-            .as_ref()
-            .map(|b| b.as_slice())
-            .unwrap_or(&[]);
+        let all = config.baselines.as_deref().unwrap_or(&[]);
 
         let source = if all.is_empty() {
             default_baselines()
@@ -134,9 +130,9 @@ impl TimingAnalyzer {
         let round_number_ratio = round_count as f64 / step_timings.len() as f64;
 
         // Verdict
-        let verdict = if variance_coefficient < 0.05 && step_timings.len() >= 3 {
-            TimingVerdict::Artificial
-        } else if round_number_ratio > 0.5 {
+        let verdict = if (variance_coefficient < 0.05 && step_timings.len() >= 3)
+            || round_number_ratio > 0.5
+        {
             TimingVerdict::Artificial
         } else if variance_coefficient > 0.1 {
             TimingVerdict::Natural
@@ -218,7 +214,7 @@ impl TimingAnalyzer {
             TimingZone::AiZone => {
                 let dist = (elapsed - baseline.mean_ms).abs();
                 let normalized = dist / baseline.std_ms;
-                f64::max(0.5, f64::min(1.0, 1.0 - normalized * 0.15))
+                (1.0 - normalized * 0.15).clamp(0.5, 1.0)
             }
             TimingZone::Suspicious => {
                 let range = baseline.human_ms - baseline.ai_upper_ms;

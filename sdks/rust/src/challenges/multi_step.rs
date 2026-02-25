@@ -208,7 +208,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
             } else {
                 &prev_ref
             };
-            let options = vec![
+            let options = [
                 format!("Compute the SHA-256 hash of {}. Your result is", ref_str),
                 format!("Hash {} using SHA-256. Your result is", ref_str),
                 format!("Apply SHA-256 to {}. Your result is", ref_str),
@@ -226,7 +226,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
             } else {
                 prev_ref.clone()
             };
-            let options = vec![
+            let options = [
                 format!(
                     "XOR each byte of {} with 0x{:02X}. Your result is",
                     ref_str, key
@@ -249,16 +249,14 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
         }
         StepDef::Hmac { key } => {
             if step_index == 0 {
-                let options = vec![
-                    format!(
+                let options = [format!(
                         "Compute HMAC-SHA256 with the hex key \"{}\" as key and the provided data as message. Your result is",
                         key
                     ),
                     format!(
                         "Use the hex key \"{}\" as an HMAC-SHA256 key to sign the provided data. Your result is",
                         key
-                    ),
-                ];
+                    )];
                 format!(
                     "Step {}: {} {}.",
                     step_num,
@@ -266,16 +264,14 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
                     result_label
                 )
             } else {
-                let options = vec![
-                    format!(
+                let options = [format!(
                         "Compute HMAC-SHA256 with {} as key and the provided data as message. Your result is",
                         prev_ref
                     ),
                     format!(
                         "Use {} as an HMAC-SHA256 key to sign the provided data. Your result is",
                         prev_ref
-                    ),
-                ];
+                    )];
                 format!(
                     "Step {}: {} {}.",
                     step_num,
@@ -290,7 +286,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
             } else {
                 prev_ref.clone()
             };
-            let options = vec![
+            let options = [
                 format!(
                     "Take bytes {} through {} (inclusive) from {}. Your result is",
                     start,
@@ -312,8 +308,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
             )
         }
         StepDef::MemoryRecall { step, byte_index } => {
-            let options = vec![
-                format!(
+            let options = [format!(
                     "What was byte {} (0-indexed) of your result R{}? Express as a 2-digit hex value. Your result is",
                     byte_index,
                     step + 1
@@ -322,8 +317,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
                     "Recall the value of byte at position {} in R{}, written as two hex digits. Your result is",
                     byte_index,
                     step + 1
-                ),
-            ];
+                )];
             format!(
                 "Step {}: {} {}.",
                 step_num,
@@ -332,7 +326,7 @@ fn generate_instruction(step_index: usize, def: &StepDef, _input_data_hex: &str)
             )
         }
         StepDef::MemoryApply { step } => {
-            let options = vec![
+            let options = [
                 format!(
                     "Apply the same operation you performed in step {} to {}. Your result is",
                     step + 1,

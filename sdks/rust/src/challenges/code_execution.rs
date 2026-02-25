@@ -179,7 +179,7 @@ impl CodeTemplate for ArrayProcessingTemplate {
         let data = B64.decode(base64_data).unwrap();
         let mut acc: u8 = 0;
         for &byte in &data {
-            acc = acc ^ byte;
+            acc ^= byte;
         }
         format!("{:02x}", acc)
     }
