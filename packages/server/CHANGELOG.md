@@ -1,5 +1,12 @@
 # @xagentauth/server
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [[`c6c224d`](https://github.com/dyshay/agentauth/commit/c6c224d03bb83d309c536fa78209b07a053e98ef)]:
+  - @xagentauth/core@0.4.0
+
 ## 0.2.1
 
 ### Patch Changes
