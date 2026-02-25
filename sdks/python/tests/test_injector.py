@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from xagentauth.pomi.catalog import CanaryCatalog
 from xagentauth.pomi.injector import CanaryInjector

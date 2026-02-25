@@ -9,7 +9,6 @@ from typing import Any
 from xagentauth.crypto import (
     random_bytes,
     sha256_hex,
-    sha256_hex_sync,
     timing_safe_equal,
     to_hex,
 )

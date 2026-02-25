@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import pytest
 
-from xagentauth.pomi.catalog import CanaryCatalog, CatalogSelectOptions, DEFAULT_CANARIES
+from xagentauth.pomi.catalog import CanaryCatalog
 
 
 def test_default_catalog_has_17_canaries():

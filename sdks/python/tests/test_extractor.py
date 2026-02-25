@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import pytest
 
 from xagentauth.pomi.extractor import CanaryExtractor
 from xagentauth.types import (
     Canary,
     CanaryAnalysisExactMatch,
     CanaryAnalysisPattern,
-    CanaryAnalysisStatistical,
-    Distribution,
 )
 
 

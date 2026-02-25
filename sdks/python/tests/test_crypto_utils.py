@@ -6,8 +6,6 @@ from xagentauth.crypto import (
     from_hex,
     generate_id,
     generate_session_token,
-    hmac_sha256_hex,
-    hmac_sha256_hex_async,
     random_bytes,
     sha256_hex,
     sha256_hex_sync,

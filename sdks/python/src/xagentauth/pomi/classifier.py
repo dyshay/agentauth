@@ -10,7 +10,6 @@ from xagentauth.types import (
     CanaryAnalysisExactMatch,
     CanaryAnalysisPattern,
     CanaryAnalysisStatistical,
-    CanaryEvidence,
     ModelAlternative,
     ModelIdentification,
 )

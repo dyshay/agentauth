@@ -5,7 +5,6 @@ import time
 import pytest
 
 from xagentauth.challenges.crypto_nl import CryptoNLDriver
-from xagentauth.challenges.ambiguous_logic import AmbiguousLogicDriver
 from xagentauth.crypto import hmac_sha256_hex
 from xagentauth.engine import AgentAuthEngine
 from xagentauth.stores.memory import MemoryStore
@@ -13,9 +12,7 @@ from xagentauth.types import (
     AgentAuthConfig,
     Difficulty,
     InitChallengeOptions,
-    PomiConfig,
     SolveInput,
-    TimingConfig,
 )
 
 

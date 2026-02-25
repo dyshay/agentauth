@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from xagentauth.timing.analyzer import TimingAnalyzer
 from xagentauth.timing.baselines import DEFAULT_BASELINES, get_baseline

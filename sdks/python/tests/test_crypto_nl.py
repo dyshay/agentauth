@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from xagentauth.challenges.crypto_nl import CryptoNLDriver, _apply_op, _execute_ops, ByteOperation
+from xagentauth.challenges.crypto_nl import CryptoNLDriver, _apply_op, ByteOperation
 
 
 @pytest.mark.asyncio

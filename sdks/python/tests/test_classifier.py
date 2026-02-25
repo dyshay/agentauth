@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from xagentauth.pomi.classifier import ModelClassifier
 from xagentauth.types import (
