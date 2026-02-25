@@ -1,7 +1,6 @@
 import time
 
 import jwt
-import pytest
 from flask import Flask, g, jsonify
 
 from xagentauth.middleware.flask import agentauth_required

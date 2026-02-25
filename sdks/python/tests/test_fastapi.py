@@ -1,7 +1,6 @@
 import time
 
 import jwt
-import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
