@@ -68,80 +68,207 @@ function IconTerminal() {
 
 /* ── Hero ──────────────────────────────────────────── */
 
+/* ── Hero Visual — Live Auth Terminal ───────────────── */
+
+function HeroVisual() {
+  const { ref, isInView } = useInView(0.1)
+  const scores = [
+    { dim: 'reasoning', val: 94 },
+    { dim: 'execution', val: 98 },
+    { dim: 'autonomy', val: 91 },
+    { dim: 'speed', val: 87 },
+    { dim: 'consistency', val: 95 },
+  ]
+
+  return (
+    <div ref={ref} className="relative w-full max-w-lg mx-auto lg:mx-0">
+      {/* Glow */}
+      <div className="absolute -inset-6 -z-10 rounded-3xl bg-brand/[0.04] blur-[40px]" />
+
+      {/* Main window */}
+      <div className="animate-glow rounded-2xl border border-white/[0.06] bg-surface-1/80 backdrop-blur-xl overflow-hidden shadow-2xl shadow-black/40">
+        {/* Title bar */}
+        <div className="flex items-center gap-2 border-b border-white/[0.04] px-4 py-2.5">
+          <div className="flex gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-red-500/50" />
+            <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/50" />
+            <div className="h-2.5 w-2.5 rounded-full bg-green-500/50" />
+          </div>
+          <span className="ml-2 font-mono text-[10px] text-zinc-600 tracking-wider">agentauth verify</span>
+        </div>
+
+        {/* Terminal output */}
+        <div className="p-5 font-mono text-[13px] leading-loose space-y-0.5">
+          {/* Line 1: init */}
+          <div
+            style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.4s ease 0.2s' }}
+          >
+            <span className="text-zinc-600 select-none">$ </span>
+            <span className="text-zinc-300">agentauth challenge </span>
+            <span className="text-zinc-500">--difficulty medium</span>
+          </div>
+
+          {/* Line 2: solving */}
+          <div
+            className="text-zinc-500"
+            style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.4s ease 0.5s' }}
+          >
+            Solving challenge... <span className="text-zinc-400">230ms</span>
+          </div>
+
+          {/* Line 3: model */}
+          <div
+            style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.4s ease 0.8s' }}
+          >
+            <span className="text-zinc-500">Model: </span>
+            <span className="text-brand">claude-4-class</span>
+            <span className="text-zinc-600"> (92% confidence)</span>
+          </div>
+
+          {/* Separator */}
+          <div
+            className="text-zinc-800 py-1"
+            style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.3s ease 1s' }}
+          >
+            ────────────────────────────────
+          </div>
+
+          {/* Score bars */}
+          <div className="space-y-2 py-1">
+            {scores.map((s, i) => (
+              <div key={s.dim} className="flex items-center gap-3"
+                style={{ opacity: isInView ? 1 : 0, transition: `opacity 0.4s ease ${1.1 + i * 0.12}s` }}
+              >
+                <span className="w-[88px] text-zinc-500 text-xs">{s.dim}</span>
+                <div className="flex-1 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${s.val >= 90 ? 'bg-brand' : 'bg-yellow-500/70'}`}
+                    style={{
+                      width: isInView ? `${s.val}%` : '0%',
+                      transition: `width 0.8s cubic-bezier(0.16,1,0.3,1) ${1.2 + i * 0.12}s`,
+                    }}
+                  />
+                </div>
+                <span
+                  className="w-7 text-right text-xs tabular-nums text-zinc-400"
+                  style={{ opacity: isInView ? 1 : 0, transition: `opacity 0.3s ease ${1.6 + i * 0.12}s` }}
+                >
+                  {s.val}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Separator */}
+          <div
+            className="text-zinc-800 py-1"
+            style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.3s ease 1.8s' }}
+          >
+            ────────────────────────────────
+          </div>
+
+          {/* JWT result */}
+          <div style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.5s ease 2s' }}>
+            <span className="text-brand">&#10003; </span>
+            <span className="text-zinc-300">Verified </span>
+            <span className="text-zinc-600">— overall </span>
+            <span className="text-white font-semibold">93%</span>
+          </div>
+
+          <div style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.5s ease 2.2s' }}>
+            <span className="text-zinc-600">Token: </span>
+            <span className="text-amber-400/70 text-xs">eyJhbGciOiJIUzI1NiIs...</span>
+          </div>
+
+          {/* Cursor */}
+          <div style={{ opacity: isInView ? 1 : 0, transition: 'opacity 0.3s ease 2.5s' }}>
+            <span className="text-zinc-600 select-none">$ </span>
+            <span className="animate-blink text-brand">_</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Small floating card — HTTP header preview */}
+      <div
+        className="absolute -bottom-6 -left-4 sm:-left-8 rounded-xl border border-white/[0.06] bg-surface-1/90 backdrop-blur-lg px-4 py-3 shadow-xl shadow-black/30"
+        style={{
+          opacity: isInView ? 1 : 0,
+          transform: isInView ? 'translateY(0)' : 'translateY(12px)',
+          transition: 'opacity 0.5s ease 2.4s, transform 0.5s ease 2.4s',
+        }}
+      >
+        <div className="font-mono text-[10px] space-y-0.5">
+          <div><span className="text-zinc-600">AgentAuth-Status: </span><span className="text-brand">verified</span></div>
+          <div><span className="text-zinc-600">AgentAuth-Score: </span><span className="text-zinc-400">0.93</span></div>
+          <div><span className="text-zinc-600">AgentAuth-Model: </span><span className="text-zinc-400">claude-4</span></div>
+        </div>
+      </div>
+
+      {/* Small floating card — Model ID */}
+      <div
+        className="absolute -top-4 -right-2 sm:-right-6 rounded-xl border border-white/[0.06] bg-surface-1/90 backdrop-blur-lg px-4 py-2.5 shadow-xl shadow-black/30"
+        style={{
+          opacity: isInView ? 1 : 0,
+          transform: isInView ? 'translateY(0)' : 'translateY(-8px)',
+          transition: 'opacity 0.5s ease 1.6s, transform 0.5s ease 1.6s',
+        }}
+      >
+        <div className="font-mono text-[10px]">
+          <div className="flex items-center gap-1.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-brand" />
+            <span className="text-zinc-400">claude-4-class</span>
+            <span className="text-brand font-semibold">92%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Hero() {
   return (
-    <section className="relative overflow-hidden pb-24 pt-20 sm:pb-32 sm:pt-28">
+    <section className="relative overflow-hidden py-20 sm:py-28 lg:py-36">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="animate-orb absolute left-1/2 -top-32 h-[700px] w-[900px] rounded-full bg-gradient-to-b from-brand/[0.08] to-transparent blur-[100px]" />
         <div className="animate-orb-2 absolute -right-40 top-40 h-[400px] w-[400px] rounded-full bg-brand/[0.04] blur-[80px]" />
       </div>
 
-      <div className="mx-auto max-w-5xl px-6">
-        <div className="animate-fade-up flex justify-center">
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-brand/20 bg-brand/[0.06] px-4 py-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-            </span>
-            <span className="font-mono text-xs text-brand tracking-wide">OPEN PROTOCOL v1</span>
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="flex flex-col gap-12 lg:flex-row lg:items-center lg:gap-16">
+          {/* Left — Text */}
+          <div className="flex-1 text-center lg:text-left">
+            <h1 className="animate-fade-up font-display text-5xl leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">
+              Authentication<br className="hidden sm:block" /> for <em className="text-brand">AI Agents</em>
+            </h1>
+
+            <p className="animate-fade-up delay-2 mt-6 max-w-lg text-lg leading-relaxed text-zinc-400 mx-auto lg:mx-0">
+              Traditional CAPTCHAs prove you&apos;re human. AgentAuth proves you&apos;re a machine
+              — and measures exactly how capable.{' '}
+              <span className="text-zinc-200">OAuth for the agentic web.</span>
+            </p>
+
+            <div className="animate-fade-up delay-3 mt-9 flex flex-col items-center gap-3 sm:flex-row lg:justify-start sm:justify-center">
+              <a
+                href="https://github.com/dyshay/agentauth#installation"
+                className="group flex items-center gap-2 rounded-xl bg-brand px-7 py-3.5 text-sm font-semibold text-surface-0 hover:bg-emerald-300 transition-all duration-300 shadow-[0_0_24px_rgba(52,211,153,0.2)] hover:shadow-[0_0_40px_rgba(52,211,153,0.3)]"
+              >
+                Get Started
+                <svg className="transition-transform group-hover:translate-x-0.5" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </a>
+              <Link
+                to="/leaderboard"
+                className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
+              >
+                View Leaderboard
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <h1 className="animate-fade-up delay-1 mt-8 text-center font-display text-6xl leading-[1.05] tracking-tight sm:text-8xl sm:leading-[1.02]">
-          Authentication for<br />
-          <em className="text-brand">AI Agents</em>
-        </h1>
-
-        <p className="animate-fade-up delay-2 mx-auto mt-7 max-w-2xl text-center text-lg leading-relaxed text-zinc-400">
-          Traditional CAPTCHAs prove you&apos;re human. AgentAuth proves you&apos;re a machine
-          — and measures exactly how capable.{' '}
-          <span className="text-zinc-200">OAuth for the agentic web.</span>
-        </p>
-
-        <div className="animate-fade-up delay-3 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <a
-            href="https://github.com/dyshay/agentauth#installation"
-            className="group flex items-center gap-2 rounded-xl bg-brand px-7 py-3.5 text-sm font-semibold text-surface-0 hover:bg-emerald-300 transition-all duration-300 shadow-[0_0_24px_rgba(52,211,153,0.2)] hover:shadow-[0_0_40px_rgba(52,211,153,0.3)]"
-          >
-            Get Started
-            <svg className="transition-transform group-hover:translate-x-0.5" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </a>
-          <Link
-            to="/leaderboard"
-            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
-          >
-            View Leaderboard
-          </Link>
-        </div>
-
-        {/* JWT Preview */}
-        <div className="animate-fade-up delay-5 mt-20 flex justify-center">
-          <div className="animate-float animate-glow relative w-full max-w-xl rounded-2xl border border-white/[0.06] bg-surface-1/80 backdrop-blur-xl overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-white/[0.04] px-5 py-3">
-              <div className="flex gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
-                <div className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
-                <div className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
-              </div>
-              <span className="ml-2 font-mono text-[10px] text-zinc-600 tracking-wider uppercase">AgentAuth JWT Payload</span>
-            </div>
-            <div className="p-5 font-mono text-sm leading-relaxed">
-              <div className="text-zinc-600">{'{'}</div>
-              <div className="ml-4"><span className="text-brand/70">"capabilities"</span><span className="text-zinc-600">{': {'}</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"reasoning"</span><span className="text-zinc-600">: </span><span className="text-emerald-300">0.94</span><span className="text-zinc-700">,</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"execution"</span><span className="text-zinc-600">: </span><span className="text-emerald-300">0.98</span><span className="text-zinc-700">,</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"autonomy"</span><span className="text-zinc-600">: </span><span className="text-emerald-300">0.91</span><span className="text-zinc-700">,</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"speed"</span><span className="text-zinc-600">: </span><span className="text-yellow-400/80">0.87</span><span className="text-zinc-700">,</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"consistency"</span><span className="text-zinc-600">: </span><span className="text-emerald-300">0.95</span></div>
-              <div className="ml-4 text-zinc-600">{'},'}</div>
-              <div className="ml-4"><span className="text-brand/70">"model_identity"</span><span className="text-zinc-600">{': {'}</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"family"</span><span className="text-zinc-600">: </span><span className="text-amber-300/80">"claude-4-class"</span><span className="text-zinc-700">,</span></div>
-              <div className="ml-8"><span className="text-zinc-500">"confidence"</span><span className="text-zinc-600">: </span><span className="text-emerald-300">0.92</span></div>
-              <div className="ml-4 text-zinc-600">{'}'}</div>
-              <div className="text-zinc-600">{'}'}<span className="animate-blink text-brand">|</span></div>
-            </div>
+          {/* Right — Illustration */}
+          <div className="flex-1 animate-fade-up delay-4">
+            <HeroVisual />
           </div>
         </div>
       </div>
