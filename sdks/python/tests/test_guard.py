@@ -49,6 +49,8 @@ class TestVerifyRequest:
         assert result.claims.sub == "agent-123"
         assert result.headers["AgentAuth-Status"] == "verified"
         assert result.headers["AgentAuth-Model-Family"] == "gpt-4"
+        assert "AgentAuth-Capabilities" in result.headers
+        assert "reasoning=0.9" in result.headers["AgentAuth-Capabilities"]
 
     def test_valid_token_with_insufficient_score_raises_403(self) -> None:
         token = _sign_token(reasoning=0.1, execution=0.1, autonomy=0.1, speed=0.1, consistency=0.1)

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import time
+import uuid
+
 import jwt
 from pydantic import BaseModel
 
@@ -19,9 +22,32 @@ class AgentAuthClaims(BaseModel):
     agentauth_version: str
 
 
+class TokenSignInput(BaseModel):
+    sub: str
+    capabilities: AgentCapabilityScore
+    model_family: str
+    challenge_ids: list[str]
+
+
 class TokenVerifier:
     def __init__(self, secret: str) -> None:
         self._secret = secret
+
+    def sign(self, input: TokenSignInput, ttl_seconds: int = 3600) -> str:
+        """Sign a new AgentAuth JWT token with HS256."""
+        now = int(time.time())
+        payload = {
+            "sub": input.sub,
+            "iss": "agentauth",
+            "iat": now,
+            "exp": now + ttl_seconds,
+            "jti": str(uuid.uuid4()),
+            "capabilities": input.capabilities.model_dump(),
+            "model_family": input.model_family,
+            "challenge_ids": input.challenge_ids,
+            "agentauth_version": "1",
+        }
+        return jwt.encode(payload, self._secret, algorithm="HS256")
 
     def verify(self, token: str) -> AgentAuthClaims:
         """Verify JWT signature, issuer, and expiration. Returns claims on success."""
