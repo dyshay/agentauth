@@ -1,7 +1,19 @@
-use jsonwebtoken::{decode, Algorithm, DecodingKey, TokenData, Validation};
+use jsonwebtoken::{
+    decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation,
+};
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::types::AgentCapabilityScore;
+
+/// Input for signing a new AgentAuth JWT token.
+#[derive(Debug, Clone)]
+pub struct TokenSignInput {
+    pub sub: String,
+    pub capabilities: AgentCapabilityScore,
+    pub model_family: String,
+    pub challenge_ids: Vec<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentAuthClaims {
@@ -70,6 +82,39 @@ impl TokenVerifier {
             decode(token, &key, &validation).map_err(|e| TokenError::Invalid(e.to_string()))?;
 
         Ok(token_data.claims)
+    }
+
+    /// Sign a new AgentAuth JWT token.
+    ///
+    /// Produces an HS256 JWT with the given claims, a generated JTI,
+    /// and an expiration based on `ttl_seconds` (defaults to 3600).
+    pub fn sign(
+        &self,
+        input: &TokenSignInput,
+        ttl_seconds: Option<u64>,
+    ) -> Result<String, TokenError> {
+        let ttl = ttl_seconds.unwrap_or(3600);
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|e| TokenError::Invalid(e.to_string()))?;
+        let iat = now.as_secs();
+        let exp = iat + ttl;
+        let jti = format!("{:032x}", now.as_nanos());
+
+        let claims = AgentAuthClaims {
+            sub: input.sub.clone(),
+            iss: "agentauth".into(),
+            iat,
+            exp,
+            jti,
+            capabilities: input.capabilities.clone(),
+            model_family: input.model_family.clone(),
+            challenge_ids: input.challenge_ids.clone(),
+            agentauth_version: "1".into(),
+        };
+
+        let key = EncodingKey::from_secret(&self.secret);
+        encode(&Header::default(), &claims, &key).map_err(|e| TokenError::Invalid(e.to_string()))
     }
 }
 
@@ -167,5 +212,64 @@ mod tests {
         let result = verifier.decode_unchecked(&token).unwrap();
         assert_eq!(result.sub, "agent-123");
         assert_eq!(result.model_family, "gpt-4");
+    }
+
+    fn test_sign_input() -> TokenSignInput {
+        TokenSignInput {
+            sub: "agent-456".into(),
+            capabilities: AgentCapabilityScore {
+                reasoning: 0.9,
+                execution: 0.85,
+                autonomy: 0.8,
+                speed: 0.75,
+                consistency: 0.88,
+            },
+            model_family: "claude-3".into(),
+            challenge_ids: vec!["ch-001".into(), "ch-002".into()],
+        }
+    }
+
+    #[test]
+    fn test_sign_produces_verifiable_token() {
+        let verifier = TokenVerifier::new(SECRET);
+        let input = test_sign_input();
+
+        let token = verifier.sign(&input, None).unwrap();
+        let claims = verifier.verify(&token).unwrap();
+
+        assert_eq!(claims.sub, "agent-456");
+        assert_eq!(claims.iss, "agentauth");
+        assert_eq!(claims.model_family, "claude-3");
+        assert_eq!(claims.agentauth_version, "1");
+        assert_eq!(claims.challenge_ids, vec!["ch-001", "ch-002"]);
+        assert!((claims.capabilities.reasoning - 0.9).abs() < f64::EPSILON);
+        assert!((claims.capabilities.execution - 0.85).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_sign_with_custom_ttl() {
+        let verifier = TokenVerifier::new(SECRET);
+        let input = test_sign_input();
+
+        let token = verifier.sign(&input, Some(120)).unwrap();
+        let claims = verifier.decode_unchecked(&token).unwrap();
+
+        assert_eq!(claims.exp - claims.iat, 120);
+    }
+
+    #[test]
+    fn test_sign_generates_unique_jti() {
+        let verifier = TokenVerifier::new(SECRET);
+        let input = test_sign_input();
+
+        let token1 = verifier.sign(&input, None).unwrap();
+        // Small delay to ensure different nanosecond timestamps
+        std::thread::sleep(std::time::Duration::from_millis(1));
+        let token2 = verifier.sign(&input, None).unwrap();
+
+        let claims1 = verifier.decode_unchecked(&token1).unwrap();
+        let claims2 = verifier.decode_unchecked(&token2).unwrap();
+
+        assert_ne!(claims1.jti, claims2.jti);
     }
 }
