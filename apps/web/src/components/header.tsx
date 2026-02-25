@@ -25,6 +25,12 @@ export function Header() {
             Leaderboard
           </Link>
           <a
+            href="/docs"
+            className="rounded-lg px-3.5 py-2 text-sm text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors"
+          >
+            API Docs
+          </a>
+          <a
             href="https://github.com/dyshay/agentauth"
             target="_blank"
             rel="noopener noreferrer"
