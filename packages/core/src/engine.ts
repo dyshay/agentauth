@@ -13,6 +13,8 @@ import type {
   ModelIdentification,
   TimingConfig,
   TimingAnalysis,
+  TimingPatternAnalysis,
+  SessionTimingAnomaly,
 } from './types.js'
 import { generateId, generateSessionToken, hmacSha256Hex, timingSafeEqual } from './crypto.js'
 import { TokenManager, type AgentAuthJWTPayload } from './token.js'
@@ -21,6 +23,7 @@ import { CanaryCatalog } from './pomi/catalog.js'
 import { CanaryInjector } from './pomi/injector.js'
 import { ModelClassifier } from './pomi/classifier.js'
 import { TimingAnalyzer } from './timing/analyzer.js'
+import { SessionTimingTracker } from './timing/session-tracker.js'
 
 export interface InitChallengeOptions {
   difficulty?: Difficulty
@@ -39,6 +42,8 @@ export interface SolveInput {
   hmac: string
   canary_responses?: Record<string, string>
   metadata?: { model?: string; framework?: string }
+  client_rtt_ms?: number
+  step_timings?: number[]
 }
 
 export interface VerifyTokenResult {
@@ -60,6 +65,7 @@ export class AgentAuthEngine {
   private canaryInjector?: CanaryInjector
   private modelClassifier?: ModelClassifier
   private timingAnalyzer?: TimingAnalyzer
+  private sessionTracker?: SessionTimingTracker
 
   constructor(config: AgentAuthConfig) {
     this.store = config.store
@@ -77,6 +83,9 @@ export class AgentAuthEngine {
     // Initialize timing analyzer if enabled
     if (config.timing?.enabled) {
       this.timingAnalyzer = new TimingAnalyzer(config.timing)
+      if (config.timing.sessionTracking?.enabled) {
+        this.sessionTracker = new SessionTimingTracker()
+      }
     }
 
     // Initialize PoMI if enabled
@@ -137,6 +146,7 @@ export class AgentAuthEngine {
       attempts: 0,
       max_attempts: 3,
       created_at: now,
+      created_at_server_ms: Date.now(),
       injected_canaries: injectedCanaries,
     }
 
@@ -198,11 +208,21 @@ export class AgentAuthEngine {
 
     if (this.timingAnalyzer) {
       const now = Date.now()
-      const elapsed_ms = now - data.challenge.created_at * 1000
+      const baseElapsed = data.created_at_server_ms
+        ? now - data.created_at_server_ms
+        : now - data.challenge.created_at * 1000
+
+      // RTT compensation: subtract client RTT, capped at 50% of elapsed
+      const rttMs = input.client_rtt_ms && input.client_rtt_ms > 0
+        ? Math.min(input.client_rtt_ms, baseElapsed * 0.5)
+        : 0
+      const elapsed_ms = baseElapsed - rttMs
+
       timingAnalysis = this.timingAnalyzer.analyze({
         elapsed_ms,
         challenge_type: data.challenge.payload.type,
         difficulty: data.challenge.difficulty,
+        rtt_ms: rttMs > 0 ? rttMs : undefined,
       })
 
       // Reject too_fast and timeout
@@ -214,8 +234,15 @@ export class AgentAuthEngine {
       }
     }
 
+    // Analyze per-step timing patterns
+    let patternAnalysis: TimingPatternAnalysis | undefined
+
+    if (this.timingAnalyzer && input.step_timings?.length) {
+      patternAnalysis = this.timingAnalyzer.analyzePattern(input.step_timings)
+    }
+
     // Compute capability score
-    const score = this.computeScore(data, timingAnalysis)
+    const score = this.computeScore(data, timingAnalysis, patternAnalysis)
 
     // Classify model identity if PoMI is enabled
     let modelIdentity: ModelIdentification | undefined
@@ -232,6 +259,18 @@ export class AgentAuthEngine {
       ? modelIdentity?.family ?? input.metadata?.model ?? 'unknown'
       : input.metadata?.model ?? 'unknown'
 
+    // Session tracking for anti-gaming
+    let sessionAnomalies: SessionTimingAnomaly[] | undefined
+
+    if (this.sessionTracker && timingAnalysis && input.metadata?.model) {
+      const sessionKey = input.metadata.model
+      this.sessionTracker.record(sessionKey, timingAnalysis.elapsed_ms, timingAnalysis.zone)
+      const anomalies = this.sessionTracker.analyze(sessionKey)
+      if (anomalies.length > 0) {
+        sessionAnomalies = anomalies
+      }
+    }
+
     // Generate token
     const token = await this.tokenManager.sign(
       {
@@ -243,7 +282,11 @@ export class AgentAuthEngine {
       { ttlSeconds: this.tokenTtlSeconds },
     )
 
-    return { success: true, score, token, model_identity: modelIdentity, timing_analysis: timingAnalysis }
+    return {
+      success: true, score, token, model_identity: modelIdentity,
+      timing_analysis: timingAnalysis, pattern_analysis: patternAnalysis,
+      session_anomalies: sessionAnomalies,
+    }
   }
 
   async verifyToken(token: string): Promise<VerifyTokenResult> {
@@ -261,19 +304,26 @@ export class AgentAuthEngine {
     }
   }
 
-  private computeScore(data: ChallengeData, timingAnalysis?: TimingAnalysis): AgentCapabilityScore {
+  private computeScore(data: ChallengeData, timingAnalysis?: TimingAnalysis, patternAnalysis?: TimingPatternAnalysis): AgentCapabilityScore {
     const dims = data.challenge.dimensions
     const penalty = timingAnalysis?.penalty ?? 0
     const zone = timingAnalysis?.zone
+
+    // Pattern-based penalty: artificial verdict reduces autonomy and consistency
+    const patternPenalty = patternAnalysis?.verdict === 'artificial' ? 0.3 : 0
 
     return {
       reasoning: dims.includes('reasoning') ? 0.9 : 0.5,
       execution: dims.includes('execution') ? 0.95 : 0.5,
       speed: Math.round((1 - penalty) * 0.95 * 1000) / 1000,
-      autonomy: (zone === 'human' || zone === 'suspicious')
-        ? Math.round((1 - penalty) * 0.9 * 1000) / 1000
-        : 0.9,
-      consistency: dims.includes('memory') ? 0.92 : 0.9,
+      autonomy: Math.round(
+        ((zone === 'human' || zone === 'suspicious')
+          ? (1 - penalty) * 0.9
+          : 0.9) * (1 - patternPenalty) * 1000,
+      ) / 1000,
+      consistency: Math.round(
+        (dims.includes('memory') ? 0.92 : 0.9) * (1 - patternPenalty) * 1000,
+      ) / 1000,
     }
   }
 }

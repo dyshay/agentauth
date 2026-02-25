@@ -166,6 +166,9 @@ describe('AgentAuthEngine', () => {
 
       const init = await timingEngine.initChallenge({ difficulty: 'easy' })
       const stored = await store.get(init.id)
+      // Push created_at_server_ms into the past to simulate timeout
+      stored!.created_at_server_ms = Date.now() - 100
+      await store.set(init.id, stored!, 30)
       const driver = new CryptoNLDriver()
       const answer = await driver.solve(stored!.challenge.payload)
       const { hmacSha256Hex } = await import('../crypto.js')
