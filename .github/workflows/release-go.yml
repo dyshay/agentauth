@@ -1,0 +1,59 @@
+name: Release — Go
+
+on:
+  push:
+    branches: [main]
+    paths: [sdks/go/**]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat sdks/go/VERSION | tr -d '[:space:]')
+          TAG="sdks/go/v${VERSION}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test
+        if: steps.check.outputs.exists == 'false'
+        working-directory: sdks/go
+        run: go test -v -race ./...
+
+      - name: Create tag and GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Go SDK ${{ steps.version.outputs.version }}"
+          body: "Published `github.com/dyshay/agentauth/sdks/go@v${{ steps.version.outputs.version }}`\n\n`go get github.com/dyshay/agentauth/sdks/go@v${{ steps.version.outputs.version }}`"
+          generate_release_notes: true
