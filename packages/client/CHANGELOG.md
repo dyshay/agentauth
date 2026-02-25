@@ -1,5 +1,12 @@
 # @xagentauth/client
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [[`2f51078`](https://github.com/dyshay/agentauth/commit/2f51078ee69aebe1544a37f22b878f4817bd5eac), [`93ec9ce`](https://github.com/dyshay/agentauth/commit/93ec9cea9d3688b7e94b07508a4712026bdaa1d2)]:
+  - @xagentauth/core@0.5.0
+
 ## 0.2.2
 
 ### Patch Changes

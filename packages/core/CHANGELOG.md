@@ -1,5 +1,13 @@
 # @xagentauth/core
 
+## 0.5.0
+
+### Minor Changes
+
+- [#27](https://github.com/dyshay/agentauth/pull/27) [`2f51078`](https://github.com/dyshay/agentauth/commit/2f51078ee69aebe1544a37f22b878f4817bd5eac) Thanks [@dyshay](https://github.com/dyshay)! - Add network latency compensation (RTT-adjusted elapsed time and zone boundary tolerance), wire per-step timing pattern analysis in engine with penalty scoring, and add anti-gaming measures (round-number detection, cross-session anomaly tracking)
+
+- [#28](https://github.com/dyshay/agentauth/pull/28) [`93ec9ce`](https://github.com/dyshay/agentauth/commit/93ec9cea9d3688b7e94b07508a4712026bdaa1d2) Thanks [@dyshay](https://github.com/dyshay)! - Add 5 new PoMI canary types (math-chain, sorting-preference, json-formatting, analogy-completion, confidence-expression) and bump catalog version to 1.1.0
+
 ## 0.4.0
 
 ### Minor Changes

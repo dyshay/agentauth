@@ -1,5 +1,22 @@
 # @xagentauth/server
 
+## 0.4.0
+
+### Minor Changes
+
+- [#39](https://github.com/dyshay/agentauth/pull/39) [`48fe3f7`](https://github.com/dyshay/agentauth/commit/48fe3f7b80ce0030cf9e7adca0cec43a9651a26a) Thanks [@dyshay](https://github.com/dyshay)! - Add Go server-side middleware with local HS256 JWT verification (stdlib only, zero deps), shared guard logic, net/http middleware with context-based claims, and Gin middleware in a separate ginauth submodule.
+
+- [#34](https://github.com/dyshay/agentauth/pull/34) [`56713b3`](https://github.com/dyshay/agentauth/commit/56713b3b09346317646518e121d9051c54cd817b) Thanks [@dyshay](https://github.com/dyshay)! - Add NestJS adapter with AgentAuthService, AgentAuthGuard, @AgentAuth() decorator, and AgentAuthModule.forRoot()
+
+- [#37](https://github.com/dyshay/agentauth/pull/37) [`8e83611`](https://github.com/dyshay/agentauth/commit/8e836114ef2a06a2017717a82742293d8811926d) Thanks [@dyshay](https://github.com/dyshay)! - Add Python server-side middleware with local HS256 JWT verification (TokenVerifier), shared guard logic, FastAPI dependency guard, and Flask decorator guard. Update docs with Python/Rust/Go middleware examples and fix SDK tab switching on the documentation site.
+
+- [#38](https://github.com/dyshay/agentauth/pull/38) [`e169ed3`](https://github.com/dyshay/agentauth/commit/e169ed38d877a6685349cac2cb567ca9574157c1) Thanks [@dyshay](https://github.com/dyshay)! - Add Rust server-side middleware with local HS256 JWT verification (jsonwebtoken crate), shared guard logic, Axum Tower layer + extractor, and Actix Transform middleware + extractor. Feature-gated behind "axum" and "actix" features.
+
+### Patch Changes
+
+- Updated dependencies [[`2f51078`](https://github.com/dyshay/agentauth/commit/2f51078ee69aebe1544a37f22b878f4817bd5eac), [`93ec9ce`](https://github.com/dyshay/agentauth/commit/93ec9cea9d3688b7e94b07508a4712026bdaa1d2)]:
+  - @xagentauth/core@0.5.0
+
 ## 0.3.0
 
 ### Minor Changes
